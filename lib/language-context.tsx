@@ -53,8 +53,19 @@ const translations = {
     personalizedTips: "Personalized Tips for You",
     yourDetails: "Your Details",
     printReport: "Print Report",
-    exportPDF: "Export PDF",
-    exporting: "Exporting...",
+    completed: "completed",
+    allCategories: "All",
+    diet: "Diet",
+    exercise: "Exercise",
+    lifestyle: "Lifestyle",
+    medical: "Medical",
+    high: "High",
+    medium: "Medium",
+    low: "Low",
+    markComplete: "Mark Complete",
+    markIncomplete: "Undo",
+    findProfessional: "Find Professional",
+    progressSummary: "Your Progress",
 
     // BMI Categories
     underweight: "Underweight",
@@ -79,32 +90,76 @@ const translations = {
         "We recommend consulting with a healthcare professional to develop a comprehensive weight management plan. Focus on gradual, sustainable changes.",
     },
 
-    // Personalized Tips
+    // Enhanced Personalized Tips
     tips: {
-      underweight: [
-        "Focus on nutrient-dense, calorie-rich foods like nuts, avocados, and lean proteins to gain healthy weight.",
-        "Incorporate strength training exercises 3-4 times per week to build muscle mass rather than just fat.",
-        "Eat smaller, frequent meals throughout the day to increase your overall caloric intake.",
-        "Consider adding healthy smoothies with protein powder, fruits, and nut butters to your diet.",
-      ],
-      normal: [
-        "Maintain your healthy weight with a balanced diet of 50% vegetables, 25% lean protein, and 25% whole grains.",
-        "Aim for at least 150 minutes of moderate aerobic activity or 75 minutes of vigorous activity weekly.",
-        "Stay hydrated with 8-10 glasses of water daily and limit processed foods and sugary drinks.",
-        "Get 7-9 hours of quality sleep each night to support your metabolism and overall health.",
-      ],
-      overweight: [
-        "Create a moderate caloric deficit of 300-500 calories per day through diet and exercise for sustainable weight loss.",
-        "Fill half your plate with non-starchy vegetables, one quarter with lean protein, and one quarter with whole grains.",
-        "Incorporate both cardio (30 minutes, 5 days/week) and strength training (2-3 days/week) into your routine.",
-        "Practice portion control by using smaller plates and eating slowly to recognize fullness cues.",
-      ],
-      obese: [
-        "Start with small, sustainable changes like replacing sugary drinks with water and taking a 10-minute walk daily.",
-        "Focus on whole, unprocessed foods and consider meal prep to avoid impulsive food choices.",
-        "Begin with low-impact exercises like swimming, walking, or cycling to protect your joints.",
-        "Consider working with a registered dietitian to create a personalized meal plan that fits your lifestyle.",
-      ],
+      underweight: {
+        nutrition: {
+          title: "Increase Caloric Intake with Nutrient-Dense Foods",
+          desc: "Focus on healthy fats like avocados, nuts, and olive oil. Add protein-rich foods like lean meats, fish, and legumes to every meal.",
+        },
+        exercise: {
+          title: "Build Muscle with Strength Training",
+          desc: "Incorporate resistance exercises 3-4 times per week. Focus on compound movements like squats, deadlifts, and bench press to build overall muscle mass.",
+        },
+        meals: {
+          title: "Eat More Frequent, Smaller Meals",
+          desc: "Aim for 5-6 smaller meals throughout the day instead of 3 large ones. This helps increase overall caloric intake without feeling overly full.",
+        },
+      },
+      normal: {
+        maintain: {
+          title: "Maintain Your Healthy Weight",
+          desc: "Continue your current healthy habits. Focus on a balanced diet with 50% vegetables, 25% lean protein, and 25% whole grains.",
+        },
+        exercise: {
+          title: "Stay Active with Regular Exercise",
+          desc: "Aim for 150 minutes of moderate aerobic activity or 75 minutes of vigorous activity weekly, plus 2 days of strength training.",
+        },
+        hydration: {
+          title: "Stay Properly Hydrated",
+          desc: "Drink 8-10 glasses of water daily. Limit sugary drinks and alcohol. Proper hydration supports metabolism and overall health.",
+        },
+      },
+      overweight: {
+        deficit: {
+          title: "Create a Sustainable Caloric Deficit",
+          desc: "Aim for a moderate deficit of 300-500 calories per day through a combination of diet and exercise for healthy weight loss.",
+        },
+        portions: {
+          title: "Practice Mindful Portion Control",
+          desc: "Use smaller plates, eat slowly, and listen to hunger cues. Fill half your plate with vegetables, quarter with protein, quarter with whole grains.",
+        },
+        cardio: {
+          title: "Incorporate Regular Cardio Exercise",
+          desc: "Start with 30 minutes of moderate cardio 5 days per week. Walking, swimming, or cycling are excellent low-impact options.",
+        },
+      },
+      obese: {
+        gradual: {
+          title: "Start with Small, Sustainable Changes",
+          desc: "Begin with simple swaps like water instead of sugary drinks, and take a 10-minute walk daily. Gradual changes are more sustainable.",
+        },
+        professional: {
+          title: "Consult Healthcare Professionals",
+          desc: "Work with a doctor, registered dietitian, or certified trainer to create a safe, personalized weight management plan.",
+        },
+        lowimpact: {
+          title: "Begin with Low-Impact Exercise",
+          desc: "Start with gentle activities like walking, swimming, or chair exercises to protect joints while building fitness gradually.",
+        },
+      },
+      female: {
+        title: "Women's Health Considerations",
+        desc: "Ensure adequate iron and calcium intake. Consider hormonal factors that may affect weight management, especially during menstrual cycles.",
+      },
+      youngAdult: {
+        title: "Build Healthy Habits Early",
+        desc: "Your metabolism is naturally higher at your age. Focus on establishing sustainable healthy habits that will benefit you long-term.",
+      },
+      matureAdult: {
+        title: "Age-Appropriate Exercise Focus",
+        desc: "Include resistance training to combat age-related muscle loss and maintain bone density. Consider joint-friendly exercises.",
+      },
     },
   },
   id: {
@@ -146,8 +201,19 @@ const translations = {
     personalizedTips: "Tips Personal untuk Anda",
     yourDetails: "Detail Anda",
     printReport: "Cetak Laporan",
-    exportPDF: "Ekspor PDF",
-    exporting: "Mengekspor...",
+    completed: "selesai",
+    allCategories: "Semua",
+    diet: "Diet",
+    exercise: "Olahraga",
+    lifestyle: "Gaya Hidup",
+    medical: "Medis",
+    high: "Tinggi",
+    medium: "Sedang",
+    low: "Rendah",
+    markComplete: "Tandai Selesai",
+    markIncomplete: "Batal",
+    findProfessional: "Cari Profesional",
+    progressSummary: "Kemajuan Anda",
 
     // BMI Categories
     underweight: "Kurus",
@@ -172,32 +238,76 @@ const translations = {
         "Kami merekomendasikan berkonsultasi dengan profesional kesehatan untuk mengembangkan rencana manajemen berat badan yang komprehensif. Fokus pada perubahan bertahap dan berkelanjutan.",
     },
 
-    // Personalized Tips
+    // Enhanced Personalized Tips
     tips: {
-      underweight: [
-        "Fokus pada makanan padat nutrisi dan kalori tinggi seperti kacang-kacangan, alpukat, dan protein tanpa lemak untuk menambah berat badan yang sehat.",
-        "Sertakan latihan kekuatan 3-4 kali per minggu untuk membangun massa otot daripada hanya lemak.",
-        "Makan dalam porsi kecil dan sering sepanjang hari untuk meningkatkan asupan kalori keseluruhan.",
-        "Pertimbangkan menambahkan smoothie sehat dengan protein powder, buah-buahan, dan selai kacang ke dalam diet Anda.",
-      ],
-      normal: [
-        "Pertahankan berat badan sehat dengan diet seimbang 50% sayuran, 25% protein tanpa lemak, dan 25% biji-bijian utuh.",
-        "Targetkan minimal 150 menit aktivitas aerobik sedang atau 75 menit aktivitas berat per minggu.",
-        "Tetap terhidrasi dengan 8-10 gelas air setiap hari dan batasi makanan olahan dan minuman manis.",
-        "Tidur berkualitas 7-9 jam setiap malam untuk mendukung metabolisme dan kesehatan keseluruhan.",
-      ],
-      overweight: [
-        "Buat defisit kalori moderat 300-500 kalori per hari melalui diet dan olahraga untuk penurunan berat badan yang berkelanjutan.",
-        "Isi setengah piring dengan sayuran non-tepung, seperempat dengan protein tanpa lemak, dan seperempat dengan biji-bijian utuh.",
-        "Sertakan kardio (30 menit, 5 hari/minggu) dan latihan kekuatan (2-3 hari/minggu) dalam rutinitas Anda.",
-        "Praktikkan kontrol porsi dengan menggunakan piring yang lebih kecil dan makan perlahan untuk mengenali sinyal kenyang.",
-      ],
-      obese: [
-        "Mulai dengan perubahan kecil yang berkelanjutan seperti mengganti minuman manis dengan air dan berjalan kaki 10 menit setiap hari.",
-        "Fokus pada makanan utuh yang tidak diproses dan pertimbangkan meal prep untuk menghindari pilihan makanan impulsif.",
-        "Mulai dengan olahraga berdampak rendah seperti berenang, berjalan, atau bersepeda untuk melindungi sendi.",
-        "Pertimbangkan bekerja dengan ahli diet terdaftar untuk membuat rencana makan personal yang sesuai dengan gaya hidup Anda.",
-      ],
+      underweight: {
+        nutrition: {
+          title: "Tingkatkan Asupan Kalori dengan Makanan Bergizi",
+          desc: "Fokus pada lemak sehat seperti alpukat, kacang-kacangan, dan minyak zaitun. Tambahkan makanan kaya protein seperti daging tanpa lemak, ikan, dan kacang-kacangan di setiap makan.",
+        },
+        exercise: {
+          title: "Bangun Otot dengan Latihan Kekuatan",
+          desc: "Sertakan latihan resistensi 3-4 kali per minggu. Fokus pada gerakan compound seperti squat, deadlift, dan bench press untuk membangun massa otot keseluruhan.",
+        },
+        meals: {
+          title: "Makan Lebih Sering dengan Porsi Kecil",
+          desc: "Targetkan 5-6 makan kecil sepanjang hari daripada 3 makan besar. Ini membantu meningkatkan asupan kalori keseluruhan tanpa merasa terlalu kenyang.",
+        },
+      },
+      normal: {
+        maintain: {
+          title: "Pertahankan Berat Badan Sehat Anda",
+          desc: "Lanjutkan kebiasaan sehat Anda saat ini. Fokus pada diet seimbang dengan 50% sayuran, 25% protein tanpa lemak, dan 25% biji-bijian utuh.",
+        },
+        exercise: {
+          title: "Tetap Aktif dengan Olahraga Teratur",
+          desc: "Targetkan 150 menit aktivitas aerobik sedang atau 75 menit aktivitas berat mingguan, plus 2 hari latihan kekuatan.",
+        },
+        hydration: {
+          title: "Tetap Terhidrasi dengan Baik",
+          desc: "Minum 8-10 gelas air setiap hari. Batasi minuman manis dan alkohol. Hidrasi yang tepat mendukung metabolisme dan kesehatan keseluruhan.",
+        },
+      },
+      overweight: {
+        deficit: {
+          title: "Buat Defisit Kalori yang Berkelanjutan",
+          desc: "Targetkan defisit moderat 300-500 kalori per hari melalui kombinasi diet dan olahraga untuk penurunan berat badan yang sehat.",
+        },
+        portions: {
+          title: "Praktikkan Kontrol Porsi yang Mindful",
+          desc: "Gunakan piring yang lebih kecil, makan perlahan, dan dengarkan sinyal lapar. Isi setengah piring dengan sayuran, seperempat dengan protein, seperempat dengan biji-bijian utuh.",
+        },
+        cardio: {
+          title: "Sertakan Olahraga Kardio Teratur",
+          desc: "Mulai dengan 30 menit kardio sedang 5 hari per minggu. Jalan kaki, berenang, atau bersepeda adalah pilihan low-impact yang sangat baik.",
+        },
+      },
+      obese: {
+        gradual: {
+          title: "Mulai dengan Perubahan Kecil yang Berkelanjutan",
+          desc: "Mulai dengan penggantian sederhana seperti air daripada minuman manis, dan jalan kaki 10 menit setiap hari. Perubahan bertahap lebih berkelanjutan.",
+        },
+        professional: {
+          title: "Konsultasi dengan Profesional Kesehatan",
+          desc: "Bekerja dengan dokter, ahli diet terdaftar, atau pelatih bersertifikat untuk membuat rencana manajemen berat badan yang aman dan personal.",
+        },
+        lowimpact: {
+          title: "Mulai dengan Olahraga Low-Impact",
+          desc: "Mulai dengan aktivitas lembut seperti jalan kaki, berenang, atau latihan kursi untuk melindungi sendi sambil membangun kebugaran secara bertahap.",
+        },
+      },
+      female: {
+        title: "Pertimbangan Kesehatan Wanita",
+        desc: "Pastikan asupan zat besi dan kalsium yang cukup. Pertimbangkan faktor hormonal yang dapat mempengaruhi manajemen berat badan, terutama selama siklus menstruasi.",
+      },
+      youngAdult: {
+        title: "Bangun Kebiasaan Sehat Sejak Dini",
+        desc: "Metabolisme Anda secara alami lebih tinggi di usia Anda. Fokus pada membangun kebiasaan sehat berkelanjutan yang akan menguntungkan Anda jangka panjang.",
+      },
+      matureAdult: {
+        title: "Fokus Olahraga yang Sesuai Usia",
+        desc: "Sertakan latihan resistensi untuk melawan kehilangan otot terkait usia dan menjaga kepadatan tulang. Pertimbangkan olahraga yang ramah sendi.",
+      },
     },
   },
 }

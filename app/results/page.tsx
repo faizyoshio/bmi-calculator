@@ -1,10 +1,12 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Heart, TrendingUp, Download, Printer } from "lucide-react"
+import { ArrowLeft, Heart, TrendingUp, Target, Clock, Utensils, Activity, CheckCircle, Printer } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useLanguage } from "@/lib/language-context"
 
@@ -19,12 +21,24 @@ interface BMIResult {
   color: string
 }
 
+interface PersonalizedTip {
+  id: string
+  title: string
+  description: string
+  icon: React.ReactNode
+  priority: "high" | "medium" | "low"
+  category: "diet" | "exercise" | "lifestyle" | "medical"
+  actionable: boolean
+  completed?: boolean
+}
+
 export default function ResultsPage() {
   const router = useRouter()
   const { t, language } = useLanguage()
   const [result, setResult] = useState<BMIResult | null>(null)
   const [progress, setProgress] = useState(0)
-  const [isExporting, setIsExporting] = useState(false)
+  const [completedTips, setCompletedTips] = useState<Set<string>>(new Set())
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
   useEffect(() => {
     const storedResult = sessionStorage.getItem("bmiResult")
@@ -35,366 +49,204 @@ export default function ResultsPage() {
     } else {
       router.push("/")
     }
+
+    // Load completed tips from localStorage
+    const savedCompletedTips = localStorage.getItem("bmi-completed-tips")
+    if (savedCompletedTips) {
+      setCompletedTips(new Set(JSON.parse(savedCompletedTips)))
+    }
   }, [router])
 
   const handlePrint = () => {
     window.print()
   }
 
-  const handleExportPDF = async () => {
-    setIsExporting(true)
-
-    try {
-      // Create a new window for PDF generation
-      const printWindow = window.open("", "_blank")
-      if (!printWindow) {
-        throw new Error("Popup blocked")
-      }
-
-      const printContent = generatePrintContent()
-
-      printWindow.document.write(printContent)
-      printWindow.document.close()
-
-      // Wait for content to load then print
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print()
-          printWindow.close()
-        }, 500)
-      }
-    } catch (error) {
-      console.error("Export failed:", error)
-      // Fallback to regular print
-      handlePrint()
-    } finally {
-      setIsExporting(false)
+  const toggleTipCompletion = (tipId: string) => {
+    const newCompletedTips = new Set(completedTips)
+    if (completedTips.has(tipId)) {
+      newCompletedTips.delete(tipId)
+    } else {
+      newCompletedTips.add(tipId)
     }
+    setCompletedTips(newCompletedTips)
+    localStorage.setItem("bmi-completed-tips", JSON.stringify(Array.from(newCompletedTips)))
   }
 
-  const generatePrintContent = () => {
-    if (!result) return ""
+  const generatePersonalizedTips = (category: string, gender: string, age?: number): PersonalizedTip[] => {
+    const baseAge = age || 25
+    const tips: PersonalizedTip[] = []
 
-    const currentDate = new Date().toLocaleDateString(language === "id" ? "id-ID" : "en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-
-    const reportTitle = language === "id" ? "Laporan Kesehatan BMI" : "BMI Health Report"
-    const reportSubtitle =
-      language === "id"
-        ? "Analisis Indeks Massa Tubuh & Rekomendasi Kesehatan"
-        : "Body Mass Index Analysis & Health Recommendations"
-    const generatedOn = language === "id" ? "Dibuat pada" : "Generated on"
-    const yourDetails = language === "id" ? "Detail Anda" : "Your Details"
-    const healthInsight = language === "id" ? "Wawasan Kesehatan" : "Health Insight"
-    const personalizedRecommendations = language === "id" ? "Rekomendasi Personal" : "Personalized Recommendations"
-    const importantNote = language === "id" ? "Penting:" : "Important:"
-    const disclaimer =
-      language === "id"
-        ? "BMI adalah alat skrining dan bukan alat diagnostik. Laporan ini hanya untuk tujuan informasi dan tidak boleh menggantikan saran medis profesional. Silakan konsultasikan dengan profesional kesehatan untuk panduan medis yang personal."
-        : "BMI is a screening tool and not a diagnostic tool. This report is for informational purposes only and should not replace professional medical advice. Please consult with a healthcare professional for personalized medical guidance."
-    const footerTitle =
-      language === "id" ? "Kalkulator BMI - Laporan Kesehatan & Kebugaran" : "BMI Calculator - Health & Wellness Report"
-    const footerNote =
-      language === "id" ? "Simpan laporan ini untuk catatan kesehatan Anda" : "Keep this report for your health records"
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${reportTitle} - ${currentDate}</title>
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body {
-              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-              line-height: 1.6;
-              color: #1f2937;
-              background: white;
-              padding: 40px;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            
-            .header {
-              text-align: center;
-              margin-bottom: 40px;
-              border-bottom: 3px solid #3b82f6;
-              padding-bottom: 20px;
-            }
-            
-            .header h1 {
-              font-size: 2.5rem;
-              font-weight: bold;
-              color: #1e40af;
-              margin-bottom: 8px;
-            }
-            
-            .header p {
-              color: #6b7280;
-              font-size: 1.1rem;
-            }
-            
-            .date {
-              text-align: right;
-              color: #6b7280;
-              margin-bottom: 30px;
-              font-size: 0.9rem;
-            }
-            
-            .bmi-score {
-              text-align: center;
-              background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-              padding: 30px;
-              border-radius: 16px;
-              margin-bottom: 30px;
-              border: 2px solid #e5e7eb;
-            }
-            
-            .bmi-value {
-              font-size: 4rem;
-              font-weight: bold;
-              color: ${getBMIColorForPrint(result.category)};
-              margin-bottom: 10px;
-            }
-            
-            .bmi-category {
-              font-size: 1.8rem;
-              font-weight: bold;
-              color: ${getBMIColorForPrint(result.category)};
-              margin-bottom: 8px;
-            }
-            
-            .bmi-label {
-              color: #6b7280;
-              font-size: 1rem;
-            }
-            
-            .section {
-              margin-bottom: 30px;
-              background: #f9fafb;
-              padding: 25px;
-              border-radius: 12px;
-              border-left: 4px solid #3b82f6;
-            }
-            
-            .section h3 {
-              font-size: 1.3rem;
-              font-weight: bold;
-              color: #1f2937;
-              margin-bottom: 15px;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            
-            .details-grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 20px;
-              margin-bottom: 20px;
-            }
-            
-            .detail-item {
-              background: white;
-              padding: 15px;
-              border-radius: 8px;
-              border: 1px solid #e5e7eb;
-            }
-            
-            .detail-label {
-              color: #6b7280;
-              font-size: 0.9rem;
-              margin-bottom: 4px;
-            }
-            
-            .detail-value {
-              font-weight: bold;
-              color: #1f2937;
-              font-size: 1.1rem;
-            }
-            
-            .tips-list {
-              list-style: none;
-              counter-reset: tip-counter;
-            }
-            
-            .tips-list li {
-              counter-increment: tip-counter;
-              margin-bottom: 15px;
-              padding-left: 40px;
-              position: relative;
-              line-height: 1.6;
-            }
-            
-            .tips-list li::before {
-              content: counter(tip-counter);
-              position: absolute;
-              left: 0;
-              top: 0;
-              background: #3b82f6;
-              color: white;
-              width: 24px;
-              height: 24px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 0.8rem;
-              font-weight: bold;
-            }
-            
-            .health-insight {
-              background: #eff6ff;
-              border: 1px solid #bfdbfe;
-              border-radius: 8px;
-              padding: 20px;
-              margin-bottom: 20px;
-            }
-            
-            .footer {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 2px solid #e5e7eb;
-              text-align: center;
-              color: #6b7280;
-              font-size: 0.9rem;
-            }
-            
-            .disclaimer {
-              background: #fef3c7;
-              border: 1px solid #f59e0b;
-              border-radius: 8px;
-              padding: 15px;
-              margin-top: 20px;
-              font-size: 0.9rem;
-            }
-            
-            @media print {
-              body {
-                padding: 20px;
-              }
-              
-              .no-print {
-                display: none !important;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>${reportTitle}</h1>
-            <p>${reportSubtitle}</p>
-          </div>
-          
-          <div class="date">
-            ${generatedOn} ${currentDate}
-          </div>
-          
-          <div class="bmi-score">
-            <div class="bmi-value">${result.bmi.toFixed(1)}</div>
-            <div class="bmi-category">${translateBMICategory(result.category, language)}</div>
-            <div class="bmi-label">${t("bodyMassIndex")}</div>
-          </div>
-          
-          <div class="section">
-            <h3>📊 ${yourDetails}</h3>
-            <div class="details-grid">
-              <div class="detail-item">
-                <div class="detail-label">${t("gender")}</div>
-                <div class="detail-value">${result.gender === "male" ? t("male") : t("female")}</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-label">${t("height")}</div>
-                <div class="detail-value">${result.height} ${t("cm")}</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-label">${t("weight")}</div>
-                <div class="detail-value">${result.weight} ${t("kg")}</div>
-              </div>
-              ${
-                result.age
-                  ? `
-              <div class="detail-item">
-                <div class="detail-label">${t("age")}</div>
-                <div class="detail-value">${result.age} ${t("years")}</div>
-              </div>
-              `
-                  : ""
-              }
-            </div>
-          </div>
-          
-          <div class="section">
-            <h3>💡 ${healthInsight}</h3>
-            <div class="health-insight">
-              ${getLocalizedHealthTip(result.category, language)}
-            </div>
-          </div>
-          
-          <div class="section">
-            <h3>🎯 ${personalizedRecommendations}</h3>
-            <ul class="tips-list">
-              ${getLocalizedPersonalizedTips(result.category, result.gender, result.age, language)
-                .map((tip) => `<li>${tip}</li>`)
-                .join("")}
-            </ul>
-          </div>
-          
-          <div class="disclaimer">
-            <strong>${importantNote}</strong> ${disclaimer}
-          </div>
-          
-          <div class="footer">
-            <p>${footerTitle}</p>
-            <p>${footerNote}</p>
-          </div>
-        </body>
-      </html>
-    `
-  }
-
-  const getBMIColorForPrint = (category: string) => {
+    // Common tips based on BMI category
     switch (category.toLowerCase()) {
       case "underweight":
-        return "#2563eb"
+        tips.push(
+          {
+            id: "underweight-nutrition",
+            title: t("tips.underweight.nutrition.title"),
+            description: t("tips.underweight.nutrition.desc"),
+            icon: <Utensils className="w-5 h-5" />,
+            priority: "high",
+            category: "diet",
+            actionable: true,
+          },
+          {
+            id: "underweight-exercise",
+            title: t("tips.underweight.exercise.title"),
+            description: t("tips.underweight.exercise.desc"),
+            icon: <Activity className="w-5 h-5" />,
+            priority: "high",
+            category: "exercise",
+            actionable: true,
+          },
+          {
+            id: "underweight-meals",
+            title: t("tips.underweight.meals.title"),
+            description: t("tips.underweight.meals.desc"),
+            icon: <Clock className="w-5 h-5" />,
+            priority: "medium",
+            category: "lifestyle",
+            actionable: true,
+          },
+        )
+        break
+
       case "normal":
-        return "#059669"
+        tips.push(
+          {
+            id: "normal-maintain",
+            title: t("tips.normal.maintain.title"),
+            description: t("tips.normal.maintain.desc"),
+            icon: <Target className="w-5 h-5" />,
+            priority: "high",
+            category: "lifestyle",
+            actionable: true,
+          },
+          {
+            id: "normal-exercise",
+            title: t("tips.normal.exercise.title"),
+            description: t("tips.normal.exercise.desc"),
+            icon: <Activity className="w-5 h-5" />,
+            priority: "high",
+            category: "exercise",
+            actionable: true,
+          },
+          {
+            id: "normal-hydration",
+            title: t("tips.normal.hydration.title"),
+            description: t("tips.normal.hydration.desc"),
+            icon: <Utensils className="w-5 h-5" />,
+            priority: "medium",
+            category: "lifestyle",
+            actionable: true,
+          },
+        )
+        break
+
       case "overweight":
-        return "#d97706"
+        tips.push(
+          {
+            id: "overweight-deficit",
+            title: t("tips.overweight.deficit.title"),
+            description: t("tips.overweight.deficit.desc"),
+            icon: <Target className="w-5 h-5" />,
+            priority: "high",
+            category: "diet",
+            actionable: true,
+          },
+          {
+            id: "overweight-portions",
+            title: t("tips.overweight.portions.title"),
+            description: t("tips.overweight.portions.desc"),
+            icon: <Utensils className="w-5 h-5" />,
+            priority: "high",
+            category: "diet",
+            actionable: true,
+          },
+          {
+            id: "overweight-cardio",
+            title: t("tips.overweight.cardio.title"),
+            description: t("tips.overweight.cardio.desc"),
+            icon: <Activity className="w-5 h-5" />,
+            priority: "medium",
+            category: "exercise",
+            actionable: true,
+          },
+        )
+        break
+
       case "obese":
-        return "#dc2626"
-      default:
-        return "#6b7280"
+        tips.push(
+          {
+            id: "obese-gradual",
+            title: t("tips.obese.gradual.title"),
+            description: t("tips.obese.gradual.desc"),
+            icon: <Target className="w-5 h-5" />,
+            priority: "high",
+            category: "lifestyle",
+            actionable: true,
+          },
+          {
+            id: "obese-professional",
+            title: t("tips.obese.professional.title"),
+            description: t("tips.obese.professional.desc"),
+            icon: <Heart className="w-5 h-5" />,
+            priority: "high",
+            category: "medical",
+            actionable: true,
+          },
+          {
+            id: "obese-lowimpact",
+            title: t("tips.obese.lowimpact.title"),
+            description: t("tips.obese.lowimpact.desc"),
+            icon: <Activity className="w-5 h-5" />,
+            priority: "medium",
+            category: "exercise",
+            actionable: true,
+          },
+        )
+        break
     }
-  }
 
-  const translateBMICategory = (category: string, lang: string) => {
-    const translations: { [key: string]: { [key: string]: string } } = {
-      underweight: { en: "Underweight", id: "Kurus" },
-      normal: { en: "Normal", id: "Normal" },
-      overweight: { en: "Overweight", id: "Gemuk" },
-      obese: { en: "Obese", id: "Obesitas" },
+    // Add gender-specific tips
+    if (gender === "female") {
+      tips.push({
+        id: "female-specific",
+        title: t("tips.female.title"),
+        description: t("tips.female.desc"),
+        icon: <Heart className="w-5 h-5" />,
+        priority: "medium",
+        category: "medical",
+        actionable: false,
+      })
     }
-    return translations[category.toLowerCase()]?.[lang] || category
-  }
 
-  const getLocalizedHealthTip = (category: string, lang: string) => {
-    return t(`healthTips.${category.toLowerCase()}`)
-  }
-
-  const getLocalizedPersonalizedTips = (category: string, gender: string, age?: number, lang: string = language) => {
-    const tips = t(`tips.${category.toLowerCase()}`)
-    if (Array.isArray(tips)) {
-      return tips.slice(0, 4)
+    // Add age-specific tips
+    if (baseAge < 25) {
+      tips.push({
+        id: "young-adult",
+        title: t("tips.youngAdult.title"),
+        description: t("tips.youngAdult.desc"),
+        icon: <TrendingUp className="w-3 h-3" />,
+        priority: "low",
+        category: "lifestyle",
+        actionable: false,
+      })
+    } else if (baseAge > 50) {
+      tips.push({
+        id: "mature-adult",
+        title: t("tips.matureAdult.title"),
+        description: t("tips.matureAdult.desc"),
+        icon: <Target className="w-3 h-3" />,
+        priority: "medium",
+        category: "exercise",
+        actionable: true,
+      })
     }
-    return []
+
+    return tips.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 }
+      return priorityOrder[b.priority] - priorityOrder[a.priority]
+    })
   }
 
   if (!result) {
@@ -466,12 +318,36 @@ export default function ResultsPage() {
     return Math.min(75 + ((bmi - 30) / 10) * 25, 100)
   }
 
-  const getPersonalizedTips = (category: string, gender: string, age?: number) => {
-    const tips = t(`tips.${category.toLowerCase()}`)
-    if (Array.isArray(tips)) {
-      return tips.slice(0, 4)
+  const personalizedTips = generatePersonalizedTips(result.category, result.gender, result.age)
+  const filteredTips =
+    selectedCategory === "all" ? personalizedTips : personalizedTips.filter((tip) => tip.category === selectedCategory)
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      case "low":
+        return "bg-green-100 text-green-800 border-green-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
-    return []
+  }
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "diet":
+        return <Utensils className="w-4 h-4" />
+      case "exercise":
+        return <Activity className="w-4 h-4" />
+      case "lifestyle":
+        return <Clock className="w-4 h-4" />
+      case "medical":
+        return <Heart className="w-4 h-4" />
+      default:
+        return <Target className="w-4 h-4" />
+    }
   }
 
   return (
@@ -502,8 +378,8 @@ export default function ResultsPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white ml-4">{t("yourResult")}</h1>
           </div>
 
-          {/* Export Actions */}
-          <div className="flex gap-2 no-print">
+          {/* Print Action */}
+          <div className="no-print">
             <Button
               variant="ghost"
               size="icon"
@@ -512,20 +388,6 @@ export default function ResultsPage() {
               title={t("printReport")}
             >
               <Printer className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleExportPDF}
-              disabled={isExporting}
-              className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/30 dark:hover:bg-white/20"
-              title={t("exportPDF")}
-            >
-              {isExporting ? (
-                <div className="w-4 h-4 border-2 border-gray-600/30 border-t-gray-600 rounded-full animate-spin"></div>
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
             </Button>
           </div>
         </div>
@@ -589,51 +451,172 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
 
-        {/* Personalized Tips Section */}
+        {/* Enhanced Personalized Tips Section */}
         <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mb-6">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              {t("personalizedTips")}
-            </h3>
-            <div className="space-y-4">
-              {getPersonalizedTips(result.category, result.gender, result.age).map((tip, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-white/20 dark:bg-white/10 rounded-lg">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400">
-                    {index + 1}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                {t("personalizedTips")}
+              </h3>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {completedTips.size}/{personalizedTips.length} {t("completed")}
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+              <Button
+                variant={selectedCategory === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("all")}
+                className="whitespace-nowrap text-xs"
+              >
+                {t("allCategories")}
+              </Button>
+              <Button
+                variant={selectedCategory === "diet" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("diet")}
+                className="whitespace-nowrap text-xs flex items-center gap-1"
+              >
+                <Utensils className="w-3 h-3" />
+                {t("diet")}
+              </Button>
+              <Button
+                variant={selectedCategory === "exercise" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("exercise")}
+                className="whitespace-nowrap text-xs flex items-center gap-1"
+              >
+                <Activity className="w-3 h-3" />
+                {t("exercise")}
+              </Button>
+              <Button
+                variant={selectedCategory === "lifestyle" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("lifestyle")}
+                className="whitespace-nowrap text-xs flex items-center gap-1"
+              >
+                <Clock className="w-3 h-3" />
+                {t("lifestyle")}
+              </Button>
+            </div>
+
+            {/* Tips List */}
+            <div className="space-y-3">
+              {filteredTips.map((tip, index) => (
+                <div
+                  key={tip.id}
+                  className={`p-4 rounded-lg border transition-all duration-300 ${
+                    completedTips.has(tip.id)
+                      ? "bg-green-50/50 border-green-200/50 dark:bg-green-900/20 dark:border-green-700/50"
+                      : "bg-white/30 dark:bg-white/10 border-white/20 hover:bg-white/40 dark:hover:bg-white/15"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          completedTips.has(tip.id)
+                            ? "bg-green-500 text-white"
+                            : "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                        }`}
+                      >
+                        {completedTips.has(tip.id) ? <CheckCircle className="w-4 h-4" /> : tip.icon}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4
+                          className={`font-medium text-sm ${
+                            completedTips.has(tip.id)
+                              ? "text-green-800 dark:text-green-200 line-through"
+                              : "text-gray-900 dark:text-white"
+                          }`}
+                        >
+                          {tip.title}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(tip.priority)}`}
+                          >
+                            {t(tip.priority)}
+                          </span>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                            {getCategoryIcon(tip.category)}
+                            <span>{t(tip.category)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p
+                        className={`text-xs leading-relaxed mb-3 ${
+                          completedTips.has(tip.id)
+                            ? "text-green-700 dark:text-green-300"
+                            : "text-gray-600 dark:text-gray-300"
+                        }`}
+                      >
+                        {tip.description}
+                      </p>
+                      {tip.actionable && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant={completedTips.has(tip.id) ? "outline" : "default"}
+                            onClick={() => toggleTipCompletion(tip.id)}
+                            className="text-xs h-7"
+                          >
+                            {completedTips.has(tip.id) ? t("markIncomplete") : t("markComplete")}
+                          </Button>
+                          {tip.category === "medical" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7 bg-transparent"
+                              onClick={() =>
+                                window.open(
+                                  "https://www.google.com/search?q=healthcare+professionals+near+me",
+                                  "_blank",
+                                )
+                              }
+                            >
+                              {t("findProfessional")}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{tip}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Progress Summary */}
+            <div className="mt-6 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg border border-blue-200/50 dark:border-blue-700/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">{t("progressSummary")}</span>
+                <span className="text-sm text-blue-600 dark:text-blue-400">
+                  {Math.round((completedTips.size / personalizedTips.length) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-blue-200/50 dark:bg-blue-800/50 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(completedTips.size / personalizedTips.length) * 100}%` }}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Export Button for Mobile */}
+        {/* Print Button for Mobile */}
         <div className="flex gap-3 mb-6 no-print">
           <Button
             onClick={handlePrint}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
           >
             <Printer className="w-4 h-4 mr-2" />
             {t("printReport")}
-          </Button>
-          <Button
-            onClick={handleExportPDF}
-            disabled={isExporting}
-            className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {isExporting ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                {t("exporting")}
-              </div>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                {t("exportPDF")}
-              </>
-            )}
           </Button>
         </div>
 
