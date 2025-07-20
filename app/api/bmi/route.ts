@@ -3,11 +3,20 @@ import { connectToDatabase } from "@/lib/mongodb"
 
 export async function POST(request: NextRequest) {
   try {
-    const { gender, height, weight, age } = await request.json()
+    const { name, gender, height, weight, age } = await request.json()
 
     // Validate input
     if (!height || !weight) {
       return NextResponse.json({ error: "Height and weight are required" }, { status: 400 })
+    }
+
+    // Validate name if provided
+    if (name && (typeof name !== "string" || name.length < 2 || name.length > 50)) {
+      return NextResponse.json({ error: "Name must be between 2-50 characters" }, { status: 400 })
+    }
+
+    if (name && !/^[a-zA-Z\s]+$/.test(name)) {
+      return NextResponse.json({ error: "Name can only contain letters and spaces" }, { status: 400 })
     }
 
     const heightNum = Number.parseFloat(height)
@@ -54,6 +63,7 @@ export async function POST(request: NextRequest) {
       const { db } = await connectToDatabase()
 
       const bmiRecord = {
+        name: name ? name.trim() : null,
         gender,
         height: heightNum,
         weight: weightNum,
@@ -61,12 +71,48 @@ export async function POST(request: NextRequest) {
         bmi: Number.parseFloat(bmi.toFixed(2)),
         category,
         timestamp: new Date(),
+        ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+        userAgent: request.headers.get("user-agent") || "unknown",
       }
 
-      await db.collection("bmi_records").insertOne(bmiRecord)
+      const result = await db.collection("bmi_records").insertOne(bmiRecord)
+
+      console.log(`BMI record saved successfully with ID: ${result.insertedId}`)
+
+      // If name was provided, also save to users collection for future reference
+      if (name) {
+        await db.collection("users").updateOne(
+          { name: name.trim().toLowerCase() },
+          {
+            $set: {
+              name: name.trim(),
+              lastCalculation: new Date(),
+              lastBMI: Number.parseFloat(bmi.toFixed(2)),
+              lastCategory: category,
+            },
+            $inc: { calculationCount: 1 },
+          },
+          { upsert: true },
+        )
+      }
     } catch (dbError) {
       console.error("Database error:", dbError)
       // Continue without failing the request if database save fails
+      return NextResponse.json(
+        {
+          bmi: Number.parseFloat(bmi.toFixed(2)),
+          category,
+          gender,
+          height: heightNum,
+          weight: weightNum,
+          age: ageNum,
+          name: name || null,
+          healthTip,
+          color,
+          warning: "Data calculated successfully but not saved to database",
+        },
+        { status: 200 },
+      )
     }
 
     return NextResponse.json({
@@ -76,8 +122,10 @@ export async function POST(request: NextRequest) {
       height: heightNum,
       weight: weightNum,
       age: ageNum,
+      name: name || null,
       healthTip,
       color,
+      saved: true,
     })
   } catch (error) {
     console.error("BMI calculation error:", error)
@@ -85,13 +133,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase()
+    const { searchParams } = new URL(request.url)
+    const name = searchParams.get("name")
 
-    const records = await db.collection("bmi_records").find({}).sort({ timestamp: -1 }).limit(10).toArray()
+    let query = {}
+    if (name) {
+      query = { name: { $regex: name, $options: "i" } }
+    }
 
-    return NextResponse.json({ records })
+    const records = await db
+      .collection("bmi_records")
+      .find(query)
+      .sort({ timestamp: -1 })
+      .limit(10)
+      .project({
+        // Exclude sensitive information from public API
+        ipAddress: 0,
+        userAgent: 0,
+      })
+      .toArray()
+
+    return NextResponse.json({ records, count: records.length })
   } catch (error) {
     console.error("Database fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch records" }, { status: 500 })

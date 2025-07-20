@@ -5,7 +5,13 @@ if (!process.env.MONGODB_URI) {
 }
 
 const uri = process.env.MONGODB_URI
-const options = {}
+const options = {
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  bufferMaxEntries: 0, // Disable mongoose buffering
+  bufferCommands: false, // Disable mongoose buffering
+}
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
@@ -29,9 +35,31 @@ if (process.env.NODE_ENV === "development") {
 }
 
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
-  const client = await clientPromise
-  const db = client.db("bmi_calculator")
-  return { client, db }
+  try {
+    const client = await clientPromise
+    const db = client.db("bmi_calculator")
+
+    // Test the connection
+    await db.admin().ping()
+    console.log("Successfully connected to MongoDB")
+
+    return { client, db }
+  } catch (error) {
+    console.error("Failed to connect to MongoDB:", error)
+    throw error
+  }
+}
+
+// Utility function to check database health
+export async function checkDatabaseHealth(): Promise<boolean> {
+  try {
+    const { db } = await connectToDatabase()
+    await db.admin().ping()
+    return true
+  } catch (error) {
+    console.error("Database health check failed:", error)
+    return false
+  }
 }
 
 export default clientPromise

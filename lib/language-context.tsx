@@ -18,6 +18,9 @@ const translations = {
     // Main page
     title: "BMI Calculator",
     subtitle: "Calculate your Body Mass Index",
+    name: "Your Name",
+    namePlaceholder: "Enter your name (optional)",
+    optional: "optional",
     gender: "Gender",
     male: "Male",
     female: "Female",
@@ -31,8 +34,13 @@ const translations = {
     calculating: "Calculating your BMI...",
     disclaimer: "BMI is a screening tool and not a diagnostic tool.",
     consultAdvice: "Consult a healthcare professional for medical advice.",
+    personalizedFor: "Personalized for",
+    welcomeMessage: "Welcome!",
+    dataStoredMessage: "Hello {name}! Your data has been securely stored.",
 
     // Validation messages
+    nameRange: "Name must be between 2-50 characters",
+    nameFormat: "Name can only contain letters and spaces",
     heightRange: "Height should be between 50-300 cm",
     weightRange: "Weight should be between 20-500 kg",
     ageRange: "Age should be between 1-120 years",
@@ -166,6 +174,9 @@ const translations = {
     // Main page
     title: "Kalkulator BMI",
     subtitle: "Hitung Indeks Massa Tubuh Anda",
+    name: "Nama Anda",
+    namePlaceholder: "Masukkan nama Anda (opsional)",
+    optional: "opsional",
     gender: "Jenis Kelamin",
     male: "Pria",
     female: "Wanita",
@@ -179,8 +190,13 @@ const translations = {
     calculating: "Menghitung BMI Anda...",
     disclaimer: "BMI adalah alat skrining dan bukan alat diagnostik.",
     consultAdvice: "Konsultasikan dengan profesional kesehatan untuk saran medis.",
+    personalizedFor: "Dipersonalisasi untuk",
+    welcomeMessage: "Selamat datang!",
+    dataStoredMessage: "Halo {name}! Data Anda telah disimpan dengan aman.",
 
     // Validation messages
+    nameRange: "Nama harus antara 2-50 karakter",
+    nameFormat: "Nama hanya boleh berisi huruf dan spasi",
     heightRange: "Tinggi badan harus antara 50-300 cm",
     weightRange: "Berat badan harus antara 20-500 kg",
     ageRange: "Usia harus antara 1-120 tahun",

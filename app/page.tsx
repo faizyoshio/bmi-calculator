@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Calculator, User, Ruler, Weight, Calendar } from "lucide-react"
+import { Calculator, User, Ruler, Weight, Calendar, UserCheck } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { LoadingDots } from "@/components/ui/loading-dots"
 import { LanguageSwitcher } from "@/components/language-switcher"
@@ -19,6 +19,7 @@ export default function BMICalculator() {
   const router = useRouter()
   const { t } = useLanguage()
   const [formData, setFormData] = useState({
+    name: "",
     gender: "male",
     height: "",
     weight: "",
@@ -37,6 +38,13 @@ export default function BMICalculator() {
     const errors: { [key: string]: string } = {}
 
     switch (field) {
+      case "name":
+        if (value && (value.length < 2 || value.length > 50)) {
+          errors.name = t("nameRange")
+        } else if (value && !/^[a-zA-Z\s]+$/.test(value)) {
+          errors.name = t("nameFormat")
+        }
+        break
       case "height":
         const height = Number.parseFloat(value)
         if (value && (height < 50 || height > 300)) {
@@ -63,7 +71,7 @@ export default function BMICalculator() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    if (value) {
+    if (value || field === "name") {
       validateField(field, value)
     } else {
       setFieldErrors((prev) => ({ ...prev, [field]: "" }))
@@ -110,6 +118,16 @@ export default function BMICalculator() {
       if (response.ok) {
         // Store result in sessionStorage for the results page
         sessionStorage.setItem("bmiResult", JSON.stringify(result))
+
+        // Show success message if name was provided
+        if (formData.name) {
+          toast({
+            title: t("welcomeMessage"),
+            description: t("dataStoredMessage").replace("{name}", formData.name),
+            variant: "default",
+          })
+        }
+
         router.push("/results")
       } else {
         throw new Error(result.error || "Failed to calculate BMI")
@@ -152,6 +170,40 @@ export default function BMICalculator() {
         <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Name Input */}
+              <div className="space-y-3">
+                <Label
+                  htmlFor="name"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  {t("name")}
+                  <span className="text-xs text-gray-500 dark:text-gray-400">({t("optional")})</span>
+                  {isValidating && <LoadingDots size="sm" />}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder={t("namePlaceholder")}
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
+                      fieldErrors.name ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
+                    maxLength={50}
+                  />
+                  {fieldErrors.name && (
+                    <p className="text-red-400 text-xs mt-1 animate-fade-in-up">{fieldErrors.name}</p>
+                  )}
+                  {formData.name && !fieldErrors.name && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <UserCheck className="w-4 h-4 text-green-500" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Gender Toggle */}
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -292,6 +344,11 @@ export default function BMICalculator() {
         <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
           <p>{t("disclaimer")}</p>
           <p className="mt-1">{t("consultAdvice")}</p>
+          {formData.name && (
+            <p className="mt-2 text-blue-600 dark:text-blue-400 font-medium">
+              {t("personalizedFor")} {formData.name}
+            </p>
+          )}
         </div>
       </div>
     </div>
