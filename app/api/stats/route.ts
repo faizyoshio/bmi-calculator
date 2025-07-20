@@ -44,6 +44,20 @@ export async function GET(request: NextRequest) {
       lastCalculation: { $gte: sevenDaysAgo },
     })
 
+    // Get average BMI by category
+    const avgBMIStats = await db
+      .collection("users")
+      .aggregate([
+        {
+          $group: {
+            _id: "$currentCategory",
+            avgBMI: { $avg: "$currentBMI" },
+            count: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray()
+
     return NextResponse.json({
       totalUsers,
       namedUsers,
@@ -52,6 +66,13 @@ export async function GET(request: NextRequest) {
       recentActivity,
       categoryDistribution: categoryStats.reduce((acc: any, stat: any) => {
         acc[stat._id] = stat.count
+        return acc
+      }, {}),
+      averageBMIByCategory: avgBMIStats.reduce((acc: any, stat: any) => {
+        acc[stat._id] = {
+          avgBMI: Math.round(stat.avgBMI * 100) / 100,
+          count: stat.count,
+        }
         return acc
       }, {}),
       timestamp: new Date().toISOString(),

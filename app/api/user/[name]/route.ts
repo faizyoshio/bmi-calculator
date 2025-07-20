@@ -10,18 +10,9 @@ export async function GET(request: NextRequest, { params }: { params: { name: st
       return NextResponse.json({ error: "Name parameter is required" }, { status: 400 })
     }
 
-    const user = await db.collection("users").findOne(
-      { name: { $regex: new RegExp(`^${name}$`, "i") } },
-      {
-        projection: {
-          // Exclude sensitive information
-          lastIpAddress: 0,
-          lastUserAgent: 0,
-          "bmiHistory.ipAddress": 0,
-          "bmiHistory.userAgent": 0,
-        },
-      },
-    )
+    const user = await db.collection("users").findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") },
+    })
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })

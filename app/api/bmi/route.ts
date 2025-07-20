@@ -70,8 +70,6 @@ export async function POST(request: NextRequest) {
         bmi: Number.parseFloat(bmi.toFixed(2)),
         category,
         timestamp: new Date(),
-        ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
-        userAgent: request.headers.get("user-agent") || "unknown",
       }
 
       if (name) {
@@ -88,8 +86,6 @@ export async function POST(request: NextRequest) {
               currentWeight: weightNum,
               currentAge: ageNum,
               currentGender: gender,
-              lastIpAddress: currentCalculation.ipAddress,
-              lastUserAgent: currentCalculation.userAgent,
             },
             $inc: { calculationCount: 1 },
             $push: {
@@ -121,8 +117,6 @@ export async function POST(request: NextRequest) {
           currentGender: gender,
           calculationCount: 1,
           bmiHistory: [currentCalculation],
-          lastIpAddress: currentCalculation.ipAddress,
-          lastUserAgent: currentCalculation.userAgent,
         }
 
         await db.collection("users").insertOne(anonymousUser)
@@ -180,19 +174,7 @@ export async function GET(request: NextRequest) {
       query = { isAnonymous: { $ne: true } } // Exclude anonymous users for privacy
     }
 
-    const users = await db
-      .collection("users")
-      .find(query)
-      .sort({ lastCalculation: -1 })
-      .limit(10)
-      .project({
-        // Exclude sensitive information from public API
-        lastIpAddress: 0,
-        lastUserAgent: 0,
-        "bmiHistory.ipAddress": 0,
-        "bmiHistory.userAgent": 0,
-      })
-      .toArray()
+    const users = await db.collection("users").find(query).sort({ lastCalculation: -1 }).limit(10).toArray()
 
     // Transform data to match previous API format
     const records = users

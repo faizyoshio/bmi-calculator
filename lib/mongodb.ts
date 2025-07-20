@@ -79,4 +79,28 @@ export async function createIndexes(): Promise<void> {
   }
 }
 
+// Utility function to clean up old IP and User Agent data
+export async function cleanupSensitiveData(): Promise<void> {
+  try {
+    const { db } = await connectToDatabase()
+
+    // Remove IP and User Agent fields from all user documents
+    await db.collection("users").updateMany(
+      {},
+      {
+        $unset: {
+          lastIpAddress: "",
+          lastUserAgent: "",
+          "bmiHistory.$[].ipAddress": "",
+          "bmiHistory.$[].userAgent": "",
+        },
+      },
+    )
+
+    console.log("Sensitive data cleanup completed successfully")
+  } catch (error) {
+    console.error("Failed to cleanup sensitive data:", error)
+  }
+}
+
 export default clientPromise
