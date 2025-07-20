@@ -11,6 +11,7 @@
   "dependencies": {
     "@aws-sdk/credential-providers": "latest",
     "@mongodb-js/zstd": "latest",
+    "@radix-ui/react-label": "latest",
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-toast": "^1.1.5",
     "class-variance-authority": "^0.7.1",
@@ -21,6 +22,7 @@
     "mongodb": "latest",
     "mongodb-client-encryption": "latest",
     "next": "14.2.16",
+    "next-themes": "^0.2.1",
     "react": "^18",
     "react-dom": "^18",
     "snappy": "latest",
