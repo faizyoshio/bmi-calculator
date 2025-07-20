@@ -12,9 +12,12 @@ import { Switch } from "@/components/ui/switch"
 import { Calculator, User, Ruler, Weight, Calendar } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { LoadingDots } from "@/components/ui/loading-dots"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { useLanguage } from "@/lib/language-context"
 
 export default function BMICalculator() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     gender: "male",
     height: "",
@@ -37,19 +40,19 @@ export default function BMICalculator() {
       case "height":
         const height = Number.parseFloat(value)
         if (value && (height < 50 || height > 300)) {
-          errors.height = "Height should be between 50-300 cm"
+          errors.height = t("heightRange")
         }
         break
       case "weight":
         const weight = Number.parseFloat(value)
         if (value && (weight < 20 || weight > 500)) {
-          errors.weight = "Weight should be between 20-500 kg"
+          errors.weight = t("weightRange")
         }
         break
       case "age":
         const age = Number.parseFloat(value)
         if (value && (age < 1 || age > 120)) {
-          errors.age = "Age should be between 1-120 years"
+          errors.age = t("ageRange")
         }
         break
     }
@@ -72,8 +75,8 @@ export default function BMICalculator() {
 
     if (!formData.height || !formData.weight) {
       toast({
-        title: "Missing Information",
-        description: "Please enter both height and weight.",
+        title: t("missingInfo"),
+        description: t("missingInfoDesc"),
         variant: "destructive",
       })
       return
@@ -84,8 +87,8 @@ export default function BMICalculator() {
 
     if (height <= 0 || weight <= 0) {
       toast({
-        title: "Invalid Input",
-        description: "Please enter valid positive numbers.",
+        title: t("invalidInput"),
+        description: t("invalidInputDesc"),
         variant: "destructive",
       })
       return
@@ -113,8 +116,8 @@ export default function BMICalculator() {
       }
     } catch (error) {
       toast({
-        title: "Calculation Error",
-        description: "Failed to calculate BMI. Please try again.",
+        title: t("calculationError"),
+        description: t("calculationErrorDesc"),
         variant: "destructive",
       })
     } finally {
@@ -130,14 +133,19 @@ export default function BMICalculator() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
+      {/* Language Switcher */}
+      <div className="fixed top-4 right-4 z-50 no-print">
+        <LanguageSwitcher />
+      </div>
+
       <div className="relative z-10 max-w-md mx-auto pt-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-2xl mb-4 border border-white/20">
             <Calculator className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">BMI Calculator</h1>
-          <p className="text-gray-600 dark:text-gray-300">Calculate your Body Mass Index</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("title")}</h1>
+          <p className="text-gray-600 dark:text-gray-300">{t("subtitle")}</p>
         </div>
 
         {/* Main Form Card */}
@@ -148,13 +156,13 @@ export default function BMICalculator() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <User className="w-4 h-4" />
-                  Gender
+                  {t("gender")}
                 </Label>
                 <div className="flex items-center justify-between p-4 bg-white/30 dark:bg-white/10 rounded-xl border border-white/20">
                   <span
                     className={`text-sm font-medium transition-colors ${formData.gender === "female" ? "text-pink-600 dark:text-pink-400" : "text-gray-500"}`}
                   >
-                    Female
+                    {t("female")}
                   </span>
                   <Switch
                     checked={formData.gender === "male"}
@@ -166,7 +174,7 @@ export default function BMICalculator() {
                   <span
                     className={`text-sm font-medium transition-colors ${formData.gender === "male" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"}`}
                   >
-                    Male
+                    {t("male")}
                   </span>
                 </div>
               </div>
@@ -178,14 +186,14 @@ export default function BMICalculator() {
                   className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
                 >
                   <Ruler className="w-4 h-4" />
-                  Height (cm)
+                  {t("height")}
                   {isValidating && <LoadingDots size="sm" />}
                 </Label>
                 <div className="relative">
                   <Input
                     id="height"
                     type="number"
-                    placeholder="Enter your height"
+                    placeholder={t("heightPlaceholder")}
                     value={formData.height}
                     onChange={(e) => handleInputChange("height", e.target.value)}
                     className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
@@ -207,13 +215,13 @@ export default function BMICalculator() {
                   className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
                 >
                   <Weight className="w-4 h-4" />
-                  Weight (kg)
+                  {t("weight")}
                 </Label>
                 <div className="relative">
                   <Input
                     id="weight"
                     type="number"
-                    placeholder="Enter your weight"
+                    placeholder={t("weightPlaceholder")}
                     value={formData.weight}
                     onChange={(e) => handleInputChange("weight", e.target.value)}
                     className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
@@ -235,13 +243,13 @@ export default function BMICalculator() {
                   className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
-                  Age (optional)
+                  {t("age")}
                 </Label>
                 <div className="relative">
                   <Input
                     id="age"
                     type="number"
-                    placeholder="Enter your age"
+                    placeholder={t("agePlaceholder")}
                     value={formData.age}
                     onChange={(e) => handleInputChange("age", e.target.value)}
                     className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
@@ -266,13 +274,13 @@ export default function BMICalculator() {
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       <div className="absolute inset-0 w-4 h-4 border-2 border-transparent border-t-white/50 rounded-full animate-spin animate-reverse"></div>
                     </div>
-                    <span className="animate-pulse">Calculating your BMI...</span>
+                    <span className="animate-pulse">{t("calculating")}</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Calculator className="w-4 h-4" />
-                    Calculate BMI
+                    {t("calculateButton")}
                   </div>
                 )}
               </Button>
@@ -282,8 +290,8 @@ export default function BMICalculator() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-          <p>BMI is a screening tool and not a diagnostic tool.</p>
-          <p className="mt-1">Consult a healthcare professional for medical advice.</p>
+          <p>{t("disclaimer")}</p>
+          <p className="mt-1">{t("consultAdvice")}</p>
         </div>
       </div>
     </div>

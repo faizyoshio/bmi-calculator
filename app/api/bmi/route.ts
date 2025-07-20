@@ -28,22 +28,22 @@ export async function POST(request: NextRequest) {
     let color = ""
 
     if (bmi < 18.5) {
-      category = "Underweight"
+      category = "underweight"
       healthTip =
         "Consider consulting a nutritionist to develop a healthy weight gain plan. Focus on nutrient-dense foods and regular exercise to build muscle mass."
       color = "blue"
     } else if (bmi >= 18.5 && bmi < 25) {
-      category = "Normal"
+      category = "normal"
       healthTip =
         "Great job! Maintain your healthy weight through balanced nutrition and regular physical activity. Keep up the good work!"
       color = "green"
     } else if (bmi >= 25 && bmi < 30) {
-      category = "Overweight"
+      category = "overweight"
       healthTip =
         "Consider adopting a balanced diet and increasing physical activity. Small lifestyle changes can make a big difference in your health."
       color = "yellow"
     } else {
-      category = "Obese"
+      category = "obese"
       healthTip =
         "We recommend consulting with a healthcare professional to develop a comprehensive weight management plan. Focus on gradual, sustainable changes."
       color = "red"
