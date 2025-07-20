@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Heart, TrendingUp } from "lucide-react"
+import { ArrowLeft, Heart, TrendingUp, Download, Printer } from "lucide-react"
 
 interface BMIResult {
   bmi: number
@@ -21,6 +21,7 @@ export default function ResultsPage() {
   const router = useRouter()
   const [result, setResult] = useState<BMIResult | null>(null)
   const [progress, setProgress] = useState(0)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     const storedResult = sessionStorage.getItem("bmiResult")
@@ -32,6 +33,327 @@ export default function ResultsPage() {
       router.push("/")
     }
   }, [router])
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const handleExportPDF = async () => {
+    setIsExporting(true)
+
+    try {
+      // Create a new window for PDF generation
+      const printWindow = window.open("", "_blank")
+      if (!printWindow) {
+        throw new Error("Popup blocked")
+      }
+
+      const printContent = generatePrintContent()
+
+      printWindow.document.write(printContent)
+      printWindow.document.close()
+
+      // Wait for content to load then print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print()
+          printWindow.close()
+        }, 500)
+      }
+    } catch (error) {
+      console.error("Export failed:", error)
+      // Fallback to regular print
+      handlePrint()
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const generatePrintContent = () => {
+    if (!result) return ""
+
+    const currentDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>BMI Report - ${currentDate}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              line-height: 1.6;
+              color: #1f2937;
+              background: white;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 3px solid #3b82f6;
+              padding-bottom: 20px;
+            }
+            
+            .header h1 {
+              font-size: 2.5rem;
+              font-weight: bold;
+              color: #1e40af;
+              margin-bottom: 8px;
+            }
+            
+            .header p {
+              color: #6b7280;
+              font-size: 1.1rem;
+            }
+            
+            .date {
+              text-align: right;
+              color: #6b7280;
+              margin-bottom: 30px;
+              font-size: 0.9rem;
+            }
+            
+            .bmi-score {
+              text-align: center;
+              background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+              padding: 30px;
+              border-radius: 16px;
+              margin-bottom: 30px;
+              border: 2px solid #e5e7eb;
+            }
+            
+            .bmi-value {
+              font-size: 4rem;
+              font-weight: bold;
+              color: ${getBMIColorForPrint(result.category)};
+              margin-bottom: 10px;
+            }
+            
+            .bmi-category {
+              font-size: 1.8rem;
+              font-weight: bold;
+              color: ${getBMIColorForPrint(result.category)};
+              margin-bottom: 8px;
+            }
+            
+            .bmi-label {
+              color: #6b7280;
+              font-size: 1rem;
+            }
+            
+            .section {
+              margin-bottom: 30px;
+              background: #f9fafb;
+              padding: 25px;
+              border-radius: 12px;
+              border-left: 4px solid #3b82f6;
+            }
+            
+            .section h3 {
+              font-size: 1.3rem;
+              font-weight: bold;
+              color: #1f2937;
+              margin-bottom: 15px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            
+            .details-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 20px;
+              margin-bottom: 20px;
+            }
+            
+            .detail-item {
+              background: white;
+              padding: 15px;
+              border-radius: 8px;
+              border: 1px solid #e5e7eb;
+            }
+            
+            .detail-label {
+              color: #6b7280;
+              font-size: 0.9rem;
+              margin-bottom: 4px;
+            }
+            
+            .detail-value {
+              font-weight: bold;
+              color: #1f2937;
+              font-size: 1.1rem;
+            }
+            
+            .tips-list {
+              list-style: none;
+              counter-reset: tip-counter;
+            }
+            
+            .tips-list li {
+              counter-increment: tip-counter;
+              margin-bottom: 15px;
+              padding-left: 40px;
+              position: relative;
+              line-height: 1.6;
+            }
+            
+            .tips-list li::before {
+              content: counter(tip-counter);
+              position: absolute;
+              left: 0;
+              top: 0;
+              background: #3b82f6;
+              color: white;
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.8rem;
+              font-weight: bold;
+            }
+            
+            .health-insight {
+              background: #eff6ff;
+              border: 1px solid #bfdbfe;
+              border-radius: 8px;
+              padding: 20px;
+              margin-bottom: 20px;
+            }
+            
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 0.9rem;
+            }
+            
+            .disclaimer {
+              background: #fef3c7;
+              border: 1px solid #f59e0b;
+              border-radius: 8px;
+              padding: 15px;
+              margin-top: 20px;
+              font-size: 0.9rem;
+            }
+            
+            @media print {
+              body {
+                padding: 20px;
+              }
+              
+              .no-print {
+                display: none !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>BMI Health Report</h1>
+            <p>Body Mass Index Analysis & Health Recommendations</p>
+          </div>
+          
+          <div class="date">
+            Generated on ${currentDate}
+          </div>
+          
+          <div class="bmi-score">
+            <div class="bmi-value">${result.bmi.toFixed(1)}</div>
+            <div class="bmi-category">${result.category}</div>
+            <div class="bmi-label">Body Mass Index</div>
+          </div>
+          
+          <div class="section">
+            <h3>📊 Your Details</h3>
+            <div class="details-grid">
+              <div class="detail-item">
+                <div class="detail-label">Gender</div>
+                <div class="detail-value">${result.gender.charAt(0).toUpperCase() + result.gender.slice(1)}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Height</div>
+                <div class="detail-value">${result.height} cm</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Weight</div>
+                <div class="detail-value">${result.weight} kg</div>
+              </div>
+              ${
+                result.age
+                  ? `
+              <div class="detail-item">
+                <div class="detail-label">Age</div>
+                <div class="detail-value">${result.age} years</div>
+              </div>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+          
+          <div class="section">
+            <h3>💡 Health Insight</h3>
+            <div class="health-insight">
+              ${result.healthTip}
+            </div>
+          </div>
+          
+          <div class="section">
+            <h3>🎯 Personalized Recommendations</h3>
+            <ul class="tips-list">
+              ${getPersonalizedTips(result.category, result.gender, result.age)
+                .map((tip) => `<li>${tip}</li>`)
+                .join("")}
+            </ul>
+          </div>
+          
+          <div class="disclaimer">
+            <strong>Important:</strong> BMI is a screening tool and not a diagnostic tool. 
+            This report is for informational purposes only and should not replace professional medical advice. 
+            Please consult with a healthcare professional for personalized medical guidance.
+          </div>
+          
+          <div class="footer">
+            <p>BMI Calculator - Health & Wellness Report</p>
+            <p>Keep this report for your health records</p>
+          </div>
+        </body>
+      </html>
+    `
+  }
+
+  const getBMIColorForPrint = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "underweight":
+        return "#2563eb"
+      case "normal":
+        return "#059669"
+      case "overweight":
+        return "#d97706"
+      case "obese":
+        return "#dc2626"
+      default:
+        return "#6b7280"
+    }
+  }
 
   if (!result) {
     return (
@@ -182,16 +504,45 @@ export default function ResultsPage() {
 
       <div className="relative z-10 max-w-md mx-auto pt-8">
         {/* Header */}
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/")}
-            className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/30 dark:hover:bg-white/20"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white ml-4">Your BMI Result</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/")}
+              className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/30 dark:hover:bg-white/20"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white ml-4">Your BMI Result</h1>
+          </div>
+
+          {/* Export Actions */}
+          <div className="flex gap-2 no-print">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handlePrint}
+              className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/30 dark:hover:bg-white/20"
+              title="Print Results"
+            >
+              <Printer className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/30 dark:hover:bg-white/20"
+              title="Export as PDF"
+            >
+              {isExporting ? (
+                <div className="w-4 h-4 border-2 border-gray-600/30 border-t-gray-600 rounded-full animate-spin"></div>
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* BMI Score Card */}
@@ -269,11 +620,33 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
 
-        {/* Action Button */}
-        <Button className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 mb-6">
-          <Heart className="w-4 h-4 mr-2" />
-          Save My Health Plan
-        </Button>
+        {/* Export Button for Mobile */}
+        <div className="flex gap-3 mb-6 no-print">
+          <Button
+            onClick={handlePrint}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Print Report
+          </Button>
+          <Button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            {isExporting ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Exporting...
+              </div>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Export PDF
+              </>
+            )}
+          </Button>
+        </div>
 
         {/* Summary Stats */}
         <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mt-6">
