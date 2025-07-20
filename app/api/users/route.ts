@@ -1,22 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { connectToDatabase } from "@/lib/mongodb"
+import { UserRepository } from "@/lib/mysql"
 
 export async function GET(request: NextRequest) {
   try {
-    const { db } = await connectToDatabase()
     const { searchParams } = new URL(request.url)
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const skip = Number.parseInt(searchParams.get("skip") || "0")
 
-    const users = await db
-      .collection("users")
-      .find({ isAnonymous: { $ne: true } }) // Exclude anonymous users
-      .sort({ lastCalculation: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray()
-
-    const totalUsers = await db.collection("users").countDocuments({ isAnonymous: { $ne: true } })
+    const users = await UserRepository.getRecentUsers(limit, skip)
+    const totalUsers = await UserRepository.getUserCount()
 
     return NextResponse.json({
       users,
