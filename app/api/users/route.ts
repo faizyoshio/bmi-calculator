@@ -10,7 +10,14 @@ export async function GET(request: NextRequest) {
 
     const users = await db
       .collection("users")
-      .find({ isAnonymous: { $ne: true } }) // Exclude anonymous users
+      .find(
+        { isAnonymous: { $ne: true } }, // Exclude anonymous users
+        {
+          projection: {
+            // No longer need to exclude ipAddress/userAgent as they are removed
+          },
+        },
+      )
       .sort({ lastCalculation: -1 })
       .skip(skip)
       .limit(limit)

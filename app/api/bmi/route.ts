@@ -174,7 +174,16 @@ export async function GET(request: NextRequest) {
       query = { isAnonymous: { $ne: true } } // Exclude anonymous users for privacy
     }
 
-    const users = await db.collection("users").find(query).sort({ lastCalculation: -1 }).limit(10).toArray()
+    const users = await db
+      .collection("users")
+      .find(query)
+      .sort({ lastCalculation: -1 })
+      .limit(10)
+      .project({
+        // Exclude sensitive information from public API
+        // No longer need to exclude ipAddress/userAgent as they are removed
+      })
+      .toArray()
 
     // Transform data to match previous API format
     const records = users
