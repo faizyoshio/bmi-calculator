@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { cleanupSensitiveData } from "@/lib/mongodb" // Ensure this imports from mongodb.ts
+import { cleanupSensitiveData } from "@/lib/mongodb"
 
 export async function POST() {
   try {

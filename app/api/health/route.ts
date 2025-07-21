@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({
         status: "healthy",
         database: "connected",
-        type: "mongodb", // Changed type to mongodb
+        type: "mongodb",
         timestamp: new Date().toISOString(),
       })
     } else {
@@ -17,7 +17,7 @@ export async function GET() {
         {
           status: "unhealthy",
           database: "disconnected",
-          type: "mongodb", // Changed type to mongodb
+          type: "mongodb",
           timestamp: new Date().toISOString(),
         },
         { status: 503 },
@@ -28,7 +28,7 @@ export async function GET() {
       {
         status: "error",
         database: "error",
-        type: "mongodb", // Changed type to mongodb
+        type: "mongodb",
         error: "Health check failed",
         timestamp: new Date().toISOString(),
       },
