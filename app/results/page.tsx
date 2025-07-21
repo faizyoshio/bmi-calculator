@@ -36,12 +36,16 @@ export default function ResultsPage() {
   const router = useRouter()
   const { t, language } = useLanguage()
   const [result, setResult] = useState<BMIResult | null>(null)
+  const [progress, setProgress] = useState(0)
   const [completedTips, setCompletedTips] = useState<Set<string>>(new Set())
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
   useEffect(() => {
     const storedResult = sessionStorage.getItem("bmiResult")
     if (storedResult) {
       setResult(JSON.parse(storedResult))
+      // Animate progress bar
+      setTimeout(() => setProgress(100), 500)
     } else {
       router.push("/")
     }
@@ -68,7 +72,7 @@ export default function ResultsPage() {
     const baseAge = age || 25
     const tips: PersonalizedTip[] = []
 
-    // BMI Category-specific tips
+    // Common tips based on BMI category
     switch (category.toLowerCase()) {
       case "underweight":
         tips.push(
@@ -218,7 +222,7 @@ export default function ResultsPage() {
         id: "young-adult",
         title: t("tips.youngAdult.title"),
         description: t("tips.youngAdult.desc"),
-        icon: <TrendingUp className="w-5 h-5" />,
+        icon: <TrendingUp className="w-3 h-3" />,
         priority: "low",
         category: "lifestyle",
         actionable: false,
@@ -228,7 +232,7 @@ export default function ResultsPage() {
         id: "mature-adult",
         title: t("tips.matureAdult.title"),
         description: t("tips.matureAdult.desc"),
-        icon: <Target className="w-5 h-5" />,
+        icon: <Target className="w-3 h-3" />,
         priority: "medium",
         category: "exercise",
         actionable: true,
@@ -311,32 +315,34 @@ export default function ResultsPage() {
   }
 
   const personalizedTips = generatePersonalizedTips(result.category, result.gender, result.age)
+  const filteredTips =
+    selectedCategory === "all" ? personalizedTips : personalizedTips.filter((tip) => tip.category === selectedCategory)
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700/50"
+        return "bg-red-100 text-red-800 border-red-200"
       case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-700/50"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
       case "low":
-        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-700/50"
+        return "bg-green-100 text-green-800 border-green-200"
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-700/50"
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryIcon = (category: string) => {
     switch (category) {
       case "diet":
-        return "text-orange-600 dark:text-orange-400"
+        return <Utensils className="w-4 h-4" />
       case "exercise":
-        return "text-blue-600 dark:text-blue-400"
+        return <Activity className="w-4 h-4" />
       case "lifestyle":
-        return "text-purple-600 dark:text-purple-400"
+        return <Clock className="w-4 h-4" />
       case "medical":
-        return "text-red-600 dark:text-red-400"
+        return <Heart className="w-4 h-4" />
       default:
-        return "text-gray-600 dark:text-gray-400"
+        return <Target className="w-4 h-4" />
     }
   }
 
@@ -349,7 +355,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Language Switcher */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50 no-print">
         <LanguageSwitcher />
       </div>
 
@@ -428,10 +434,10 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
 
-        {/* Refined Personalized Tips Section */}
+        {/* Enhanced Personalized Tips Section */}
         <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mb-6">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 {t("personalizedTips")}
@@ -441,33 +447,72 @@ export default function ResultsPage() {
               </div>
             </div>
 
+            {/* Category Filter */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+              <Button
+                variant={selectedCategory === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("all")}
+                className="whitespace-nowrap text-xs"
+              >
+                {t("allCategories")}
+              </Button>
+              <Button
+                variant={selectedCategory === "diet" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("diet")}
+                className="whitespace-nowrap text-xs flex items-center gap-1"
+              >
+                <Utensils className="w-3 h-3" />
+                {t("diet")}
+              </Button>
+              <Button
+                variant={selectedCategory === "exercise" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("exercise")}
+                className="whitespace-nowrap text-xs flex items-center gap-1"
+              >
+                <Activity className="w-3 h-3" />
+                {t("exercise")}
+              </Button>
+              <Button
+                variant={selectedCategory === "lifestyle" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("lifestyle")}
+                className="whitespace-nowrap text-xs flex items-center gap-1"
+              >
+                <Clock className="w-3 h-3" />
+                {t("lifestyle")}
+              </Button>
+            </div>
+
             {/* Tips List */}
-            <div className="space-y-4">
-              {personalizedTips.map((tip, index) => (
+            <div className="space-y-3">
+              {filteredTips.map((tip, index) => (
                 <div
                   key={tip.id}
-                  className={`p-4 rounded-xl border transition-all duration-300 ${
+                  className={`p-4 rounded-lg border transition-all duration-300 ${
                     completedTips.has(tip.id)
                       ? "bg-green-50/50 border-green-200/50 dark:bg-green-900/20 dark:border-green-700/50"
                       : "bg-white/30 dark:bg-white/10 border-white/20 hover:bg-white/40 dark:hover:bg-white/15"
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-1">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           completedTips.has(tip.id)
                             ? "bg-green-500 text-white"
                             : "bg-blue-500/20 text-blue-600 dark:text-blue-400"
                         }`}
                       >
-                        {completedTips.has(tip.id) ? <CheckCircle className="w-5 h-5" /> : tip.icon}
+                        {completedTips.has(tip.id) ? <CheckCircle className="w-4 h-4" /> : tip.icon}
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
                         <h4
-                          className={`font-semibold text-sm leading-tight ${
+                          className={`font-medium text-sm ${
                             completedTips.has(tip.id)
                               ? "text-green-800 dark:text-green-200 line-through"
                               : "text-gray-900 dark:text-white"
@@ -475,16 +520,20 @@ export default function ResultsPage() {
                         >
                           {tip.title}
                         </h4>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(tip.priority)}`}
                           >
                             {t(tip.priority)}
                           </span>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                            {getCategoryIcon(tip.category)}
+                            <span>{t(tip.category)}</span>
+                          </div>
                         </div>
                       </div>
                       <p
-                        className={`text-sm leading-relaxed mb-4 ${
+                        className={`text-xs leading-relaxed mb-3 ${
                           completedTips.has(tip.id)
                             ? "text-green-700 dark:text-green-300"
                             : "text-gray-600 dark:text-gray-300"
@@ -492,40 +541,33 @@ export default function ResultsPage() {
                       >
                         {tip.description}
                       </p>
-                      <div className="flex items-center justify-between">
-                        <div
-                          className={`flex items-center gap-1 text-xs font-medium ${getCategoryColor(tip.category)}`}
-                        >
-                          <span className="capitalize">{t(tip.category)}</span>
-                        </div>
-                        {tip.actionable && (
-                          <div className="flex gap-2">
+                      {tip.actionable && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant={completedTips.has(tip.id) ? "outline" : "default"}
+                            onClick={() => toggleTipCompletion(tip.id)}
+                            className="text-xs h-7"
+                          >
+                            {completedTips.has(tip.id) ? t("markIncomplete") : t("markComplete")}
+                          </Button>
+                          {tip.category === "medical" && (
                             <Button
                               size="sm"
-                              variant={completedTips.has(tip.id) ? "outline" : "default"}
-                              onClick={() => toggleTipCompletion(tip.id)}
-                              className="text-xs h-8 px-3"
+                              variant="outline"
+                              className="text-xs h-7 bg-transparent"
+                              onClick={() =>
+                                window.open(
+                                  "https://www.google.com/search?q=healthcare+professionals+near+me",
+                                  "_blank",
+                                )
+                              }
                             >
-                              {completedTips.has(tip.id) ? t("markIncomplete") : t("markComplete")}
+                              {t("findProfessional")}
                             </Button>
-                            {tip.category === "medical" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs h-8 px-3 bg-transparent"
-                                onClick={() =>
-                                  window.open(
-                                    "https://www.google.com/search?q=healthcare+professionals+near+me",
-                                    "_blank",
-                                  )
-                                }
-                              >
-                                {t("findProfessional")}
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -533,16 +575,16 @@ export default function ResultsPage() {
             </div>
 
             {/* Progress Summary */}
-            <div className="mt-6 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">{t("progressSummary")}</span>
-                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+            <div className="mt-6 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg border border-blue-200/50 dark:border-blue-700/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">{t("progressSummary")}</span>
+                <span className="text-sm text-blue-600 dark:text-blue-400">
                   {Math.round((completedTips.size / personalizedTips.length) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-blue-200/50 dark:bg-blue-800/50 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${(completedTips.size / personalizedTips.length) * 100}%` }}
                 />
               </div>

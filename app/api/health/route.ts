@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { checkDatabaseHealth } from "@/lib/mysql"
+import { checkDatabaseHealth } from "@/lib/mongodb"
 
 export async function GET() {
   try {
@@ -9,7 +9,6 @@ export async function GET() {
       return NextResponse.json({
         status: "healthy",
         database: "connected",
-        type: "mysql",
         timestamp: new Date().toISOString(),
       })
     } else {
@@ -17,7 +16,6 @@ export async function GET() {
         {
           status: "unhealthy",
           database: "disconnected",
-          type: "mysql",
           timestamp: new Date().toISOString(),
         },
         { status: 503 },
@@ -28,7 +26,6 @@ export async function GET() {
       {
         status: "error",
         database: "error",
-        type: "mysql",
         error: "Health check failed",
         timestamp: new Date().toISOString(),
       },

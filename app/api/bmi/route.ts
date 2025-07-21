@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { UserRepository } from "@/lib/mysql"
+import { connectToDatabase } from "@/lib/mongodb"
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,33 +58,43 @@ export async function POST(request: NextRequest) {
       color = "red"
     }
 
-    // Save to MySQL database
+    // Save to database
     try {
-      const result = await UserRepository.createOrUpdateUser({
-        name: name?.trim() || undefined,
+      const { db } = await connectToDatabase()
+
+      const bmiRecord = {
+        name: name ? name.trim() : null,
         gender,
         height: heightNum,
         weight: weightNum,
         age: ageNum,
         bmi: Number.parseFloat(bmi.toFixed(2)),
         category,
-      })
+        timestamp: new Date(),
+        ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+        userAgent: request.headers.get("user-agent") || "unknown",
+      }
 
-      console.log(`User record ${result.is_new_user ? "created" : "updated"} successfully`)
+      const result = await db.collection("bmi_records").insertOne(bmiRecord)
 
-      return NextResponse.json({
-        bmi: Number.parseFloat(bmi.toFixed(2)),
-        category,
-        gender,
-        height: heightNum,
-        weight: weightNum,
-        age: ageNum,
-        name: name || null,
-        healthTip,
-        color,
-        saved: true,
-        userId: result.user_id,
-      })
+      console.log(`BMI record saved successfully with ID: ${result.insertedId}`)
+
+      // If name was provided, also save to users collection for future reference
+      if (name) {
+        await db.collection("users").updateOne(
+          { name: name.trim().toLowerCase() },
+          {
+            $set: {
+              name: name.trim(),
+              lastCalculation: new Date(),
+              lastBMI: Number.parseFloat(bmi.toFixed(2)),
+              lastCategory: category,
+            },
+            $inc: { calculationCount: 1 },
+          },
+          { upsert: true },
+        )
+      }
     } catch (dbError) {
       console.error("Database error:", dbError)
       // Continue without failing the request if database save fails
@@ -104,6 +114,19 @@ export async function POST(request: NextRequest) {
         { status: 200 },
       )
     }
+
+    return NextResponse.json({
+      bmi: Number.parseFloat(bmi.toFixed(2)),
+      category,
+      gender,
+      height: heightNum,
+      weight: weightNum,
+      age: ageNum,
+      name: name || null,
+      healthTip,
+      color,
+      saved: true,
+    })
   } catch (error) {
     console.error("BMI calculation error:", error)
     return NextResponse.json({ error: "Failed to calculate BMI" }, { status: 500 })
@@ -112,29 +135,28 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const { db } = await connectToDatabase()
     const { searchParams } = new URL(request.url)
     const name = searchParams.get("name")
 
+    let query = {}
     if (name) {
-      // Get specific user with history
-      const result = await UserRepository.getUserWithHistory(name)
-      if (!result.user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 })
-      }
-
-      // Transform history to match previous API format
-      const records = result.history.map((calculation: any) => ({
-        ...calculation,
-        name: result.user.name,
-        userId: result.user.id,
-      }))
-
-      return NextResponse.json({ records, count: records.length })
-    } else {
-      // Get recent calculations from all users
-      const records = await UserRepository.getRecentUsers(10)
-      return NextResponse.json({ records, count: records.length })
+      query = { name: { $regex: name, $options: "i" } }
     }
+
+    const records = await db
+      .collection("bmi_records")
+      .find(query)
+      .sort({ timestamp: -1 })
+      .limit(10)
+      .project({
+        // Exclude sensitive information from public API
+        ipAddress: 0,
+        userAgent: 0,
+      })
+      .toArray()
+
+    return NextResponse.json({ records, count: records.length })
   } catch (error) {
     console.error("Database fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch records" }, { status: 500 })

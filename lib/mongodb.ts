@@ -62,45 +62,4 @@ export async function checkDatabaseHealth(): Promise<boolean> {
   }
 }
 
-// Utility function to create indexes for better performance
-export async function createIndexes(): Promise<void> {
-  try {
-    const { db } = await connectToDatabase()
-
-    // Create indexes on users collection
-    await db.collection("users").createIndex({ name: 1 })
-    await db.collection("users").createIndex({ lastCalculation: -1 })
-    await db.collection("users").createIndex({ currentCategory: 1 })
-    await db.collection("users").createIndex({ isAnonymous: 1 })
-
-    console.log("Database indexes created successfully")
-  } catch (error) {
-    console.error("Failed to create database indexes:", error)
-  }
-}
-
-// Utility function to clean up old IP and User Agent data
-export async function cleanupSensitiveData(): Promise<void> {
-  try {
-    const { db } = await connectToDatabase()
-
-    // Remove IP and User Agent fields from all user documents
-    await db.collection("users").updateMany(
-      {},
-      {
-        $unset: {
-          lastIpAddress: "",
-          lastUserAgent: "",
-          "bmiHistory.$[].ipAddress": "",
-          "bmiHistory.$[].userAgent": "",
-        },
-      },
-    )
-
-    console.log("Sensitive data cleanup completed successfully")
-  } catch (error) {
-    console.error("Failed to cleanup sensitive data:", error)
-  }
-}
-
 export default clientPromise
