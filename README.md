@@ -27,15 +27,15 @@ Before you begin, ensure you have the following installed:
 To get the project up and running on your local machine, follow these steps:
 
 1.  **Clone the Repository (or Download)**:
-    If you have access to the Git repository, clone it:
+    If you have access to the Git repository, clone it using your terminal (or VS Code's integrated terminal):
     \`\`\`bash
     git clone <repository-url>
     cd bmi-calculator
     \`\`\`
-    Alternatively, if you downloaded a `.zip` file from v0, extract it to your desired directory.
+    Alternatively, if you downloaded a `.zip` file from v0, extract it to your desired directory and open the folder in VS Code.
 
 2.  **Install Dependencies**:
-    Navigate into the project directory and install the necessary Node.js packages using npm or Yarn:
+    Open the integrated terminal in VS Code (`Ctrl+\`` or `View > Terminal`) and navigate into the project directory. Then, install the necessary Node.js packages:
 
     \`\`\`bash
     npm install
@@ -44,7 +44,7 @@ To get the project up and running on your local machine, follow these steps:
     \`\`\`
 
 3.  **Set Up Environment Variables**:
-    Create a file named `.env.local` in the root of your project. This file will store your sensitive environment variables, such as your MongoDB connection string.
+    Create a file named `.env.local` in the root of your project. You can do this directly in VS Code's Explorer panel. This file will store your sensitive environment variables, such as your MongoDB connection string.
 
     \`\`\`plaintext
     # MongoDB Connection String (replace with your actual connection string)
@@ -91,7 +91,7 @@ If you don't have a MongoDB Atlas cluster set up, follow these steps:
 
 ### Running the Application Locally
 
-Once you have installed the dependencies and configured your environment variables, you can run the development server:
+Once you have installed the dependencies and configured your environment variables, you can run the development server from your VS Code integrated terminal:
 
 \`\`\`bash
 npm run dev
