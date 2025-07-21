@@ -37,10 +37,10 @@ if (process.env.NODE_ENV === "development") {
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
   try {
     const client = await clientPromise
-    const db = client.db(process.env.DB_NAME || "bmi_calculator") // Use DB_NAME from env or default
+    const db = client.db("bmi_calculator")
 
     // Test the connection
-    await db.command({ ping: 1 })
+    await db.admin().ping()
     console.log("Successfully connected to MongoDB")
 
     return { client, db }
@@ -54,7 +54,7 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
     const { db } = await connectToDatabase()
-    await db.command({ ping: 1 })
+    await db.admin().ping()
     return true
   } catch (error) {
     console.error("Database health check failed:", error)
