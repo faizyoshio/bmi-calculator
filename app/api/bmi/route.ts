@@ -58,12 +58,11 @@ export async function POST(request: NextRequest) {
       color = "red"
     }
 
-    // Save to database
+    // Save to users collection only
     try {
       const { db } = await connectToDatabase()
 
-      const bmiRecord = {
-        name: name ? name.trim() : null,
+      const currentCalculation = {
         gender,
         height: heightNum,
         weight: weightNum,
@@ -71,29 +70,57 @@ export async function POST(request: NextRequest) {
         bmi: Number.parseFloat(bmi.toFixed(2)),
         category,
         timestamp: new Date(),
-        ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
-        userAgent: request.headers.get("user-agent") || "unknown",
       }
 
-      const result = await db.collection("bmi_records").insertOne(bmiRecord)
-
-      console.log(`BMI record saved successfully with ID: ${result.insertedId}`)
-
-      // If name was provided, also save to users collection for future reference
       if (name) {
-        await db.collection("users").updateOne(
+        // If name is provided, update or create user record
+        const result = await db.collection("users").updateOne(
           { name: name.trim().toLowerCase() },
           {
             $set: {
               name: name.trim(),
               lastCalculation: new Date(),
-              lastBMI: Number.parseFloat(bmi.toFixed(2)),
-              lastCategory: category,
+              currentBMI: Number.parseFloat(bmi.toFixed(2)),
+              currentCategory: category,
+              currentHeight: heightNum,
+              currentWeight: weightNum,
+              currentAge: ageNum,
+              currentGender: gender,
             },
             $inc: { calculationCount: 1 },
+            $push: {
+              bmiHistory: {
+                $each: [currentCalculation],
+                $slice: -10, // Keep only last 10 calculations
+              },
+            },
+            $setOnInsert: {
+              createdAt: new Date(),
+            },
           },
           { upsert: true },
         )
+
+        console.log(`User record updated successfully for: ${name}`)
+      } else {
+        // If no name provided, create anonymous user record
+        const anonymousUser = {
+          name: null,
+          isAnonymous: true,
+          createdAt: new Date(),
+          lastCalculation: new Date(),
+          currentBMI: Number.parseFloat(bmi.toFixed(2)),
+          currentCategory: category,
+          currentHeight: heightNum,
+          currentWeight: weightNum,
+          currentAge: ageNum,
+          currentGender: gender,
+          calculationCount: 1,
+          bmiHistory: [currentCalculation],
+        }
+
+        await db.collection("users").insertOne(anonymousUser)
+        console.log("Anonymous user record created successfully")
       }
     } catch (dbError) {
       console.error("Database error:", dbError)
@@ -142,21 +169,35 @@ export async function GET(request: NextRequest) {
     let query = {}
     if (name) {
       query = { name: { $regex: name, $options: "i" } }
+    } else {
+      // If no name specified, get recent calculations from all users
+      query = { isAnonymous: { $ne: true } } // Exclude anonymous users for privacy
     }
 
-    const records = await db
-      .collection("bmi_records")
+    const users = await db
+      .collection("users")
       .find(query)
-      .sort({ timestamp: -1 })
+      .sort({ lastCalculation: -1 })
       .limit(10)
       .project({
         // Exclude sensitive information from public API
-        ipAddress: 0,
-        userAgent: 0,
+        // No longer need to exclude ipAddress/userAgent as they are removed
       })
       .toArray()
 
-    return NextResponse.json({ records, count: records.length })
+    // Transform data to match previous API format
+    const records = users
+      .flatMap(
+        (user) =>
+          user.bmiHistory?.map((calculation: any) => ({
+            ...calculation,
+            name: user.name,
+            userId: user._id,
+          })) || [],
+      )
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+    return NextResponse.json({ records: records.slice(0, 10), count: records.length })
   } catch (error) {
     console.error("Database fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch records" }, { status: 500 })

@@ -37,10 +37,10 @@ if (process.env.NODE_ENV === "development") {
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
   try {
     const client = await clientPromise
-    const db = client.db("bmi_calculator")
+    const db = client.db(process.env.DB_NAME || "bmi_calculator") // Use DB_NAME from env or default
 
     // Test the connection
-    await db.admin().ping()
+    await db.command({ ping: 1 })
     console.log("Successfully connected to MongoDB")
 
     return { client, db }
@@ -54,11 +54,52 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
     const { db } = await connectToDatabase()
-    await db.admin().ping()
+    await db.command({ ping: 1 })
     return true
   } catch (error) {
     console.error("Database health check failed:", error)
     return false
+  }
+}
+
+// Utility function to create indexes for better performance
+export async function createIndexes(): Promise<void> {
+  try {
+    const { db } = await connectToDatabase()
+
+    // Create indexes on users collection
+    await db.collection("users").createIndex({ name: 1 })
+    await db.collection("users").createIndex({ lastCalculation: -1 })
+    await db.collection("users").createIndex({ currentCategory: 1 })
+    await db.collection("users").createIndex({ isAnonymous: 1 })
+
+    console.log("Database indexes created successfully")
+  } catch (error) {
+    console.error("Failed to create database indexes:", error)
+  }
+}
+
+// Utility function to clean up old IP and User Agent data
+export async function cleanupSensitiveData(): Promise<void> {
+  try {
+    const { db } = await connectToDatabase()
+
+    // Remove IP and User Agent fields from all user documents
+    await db.collection("users").updateMany(
+      {},
+      {
+        $unset: {
+          lastIpAddress: "",
+          lastUserAgent: "",
+          "bmiHistory.$[].ipAddress": "",
+          "bmiHistory.$[].userAgent": "",
+        },
+      },
+    )
+
+    console.log("Sensitive data cleanup completed successfully")
+  } catch (error) {
+    console.error("Failed to cleanup sensitive data:", error)
   }
 }
 
