@@ -26,14 +26,16 @@ Before you begin, ensure you have the following installed:
 
 To get the project up and running on your local machine, follow these steps:
 
-1.  **Download the Code**:
-    You can download this project directly from the v0 interface using the "Download Code" button. This will provide you with a `.zip` file containing all necessary files.
+1.  **Clone the Repository (or Download)**:
+    If you have access to the Git repository, clone it:
+    \`\`\`bash
+    git clone <repository-url>
+    cd bmi-calculator
+    \`\`\`
+    Alternatively, if you downloaded a `.zip` file from v0, extract it to your desired directory.
 
-2.  **Extract the Project**:
-    Unzip the downloaded file to your desired directory.
-
-3.  **Install Dependencies**:
-    Navigate to the project root directory in your terminal and install the required packages:
+2.  **Install Dependencies**:
+    Navigate into the project directory and install the necessary Node.js packages using npm or Yarn:
 
     \`\`\`bash
     npm install
@@ -41,10 +43,10 @@ To get the project up and running on your local machine, follow these steps:
     yarn install
     \`\`\`
 
-4.  **Set Up Environment Variables**:
-    Create a `.env.local` file in the root of your project and add your MongoDB connection string and database name.
+3.  **Set Up Environment Variables**:
+    Create a file named `.env.local` in the root of your project. This file will store your sensitive environment variables, such as your MongoDB connection string.
 
-    ```plaintext
+    \`\`\`plaintext
     # MongoDB Connection String (replace with your actual connection string)
     MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority&appName=<appName>
 
@@ -55,8 +57,7 @@ To get the project up and running on your local machine, follow these steps:
     NODE_ENV=development
     NEXT_PUBLIC_APP_URL=http://localhost:3000
     \`\`\`
-
-    **Important**: Replace `<username>`, `<password>`, `<cluster-url>`, and `<appName>` with your actual MongoDB Atlas credentials and cluster details. The `DB_NAME` should match the database you intend to use (e.g., `bmi_calculator`).
+    **Important**: Make sure to replace the placeholders (`<username>`, `<password>`, `<cluster-url>`, and `<appName>`) with your actual MongoDB Atlas credentials and cluster details. The `DB_NAME` should match the database you intend to use (e.g., `bmi_calculator`).
 
 ## Database Setup (MongoDB Atlas)
 
