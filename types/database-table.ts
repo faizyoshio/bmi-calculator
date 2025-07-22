@@ -1,7 +1,7 @@
 export interface User {
   id: string
   name: string
-  gender: "male" | "female"
+  gender: "male" | "female" | "unknown"
   age: number | string
   height: number
   weight: number
@@ -35,6 +35,11 @@ export interface DatabaseTableResponse {
   pagination: PaginationInfo
   filters: FilterOptions
   sort: SortInfo
+  debug?: {
+    appliedFilters: any
+    genderStatsRaw: any[]
+    totalRecords: number
+  }
 }
 
 export interface TableFilters {

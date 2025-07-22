@@ -25,6 +25,7 @@ import {
   AlertCircle,
   FileText,
   FileSpreadsheet,
+  Info,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import type { User, DatabaseTableResponse, TableFilters } from "@/types/database-table"
@@ -62,6 +63,7 @@ export function DatabaseTable({
   })
   const [showFilters, setShowFilters] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<any>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -76,6 +78,8 @@ export function DatabaseTable({
         ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== "")),
       })
 
+      console.log("Fetching data with params:", params.toString())
+
       const response = await fetch(`/api/database?${params}`)
 
       if (!response.ok) {
@@ -84,9 +88,15 @@ export function DatabaseTable({
 
       const result: DatabaseTableResponse = await response.json()
 
+      console.log("API Response:", result)
+
       setData(result.data)
       setPagination(result.pagination)
       setFilterOptions(result.filters)
+      setDebugInfo(result.debug)
+
+      // Log filter options for debugging
+      console.log("Filter options received:", result.filters)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch database content"
       setError(errorMessage)
@@ -127,11 +137,13 @@ export function DatabaseTable({
   }
 
   const handleFilterChange = (key: keyof TableFilters, value: string) => {
+    console.log(`Filter change: ${key} = ${value}`)
     setFilters((prev) => ({ ...prev, [key]: value }))
     setPagination((prev) => ({ ...prev, currentPage: 1 }))
   }
 
   const clearFilters = () => {
+    console.log("Clearing all filters")
     setFilters({
       search: "",
       category: "",
@@ -258,6 +270,31 @@ export function DatabaseTable({
         </CardHeader>
       </Card>
 
+      {/* Debug Info (only show in development) */}
+      {debugInfo && process.env.NODE_ENV === "development" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Info className="w-4 h-4" />
+              Debug Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs space-y-2">
+              <div>
+                <strong>Total Records:</strong> {debugInfo.totalRecords}
+              </div>
+              <div>
+                <strong>Applied Filters:</strong> {JSON.stringify(debugInfo.appliedFilters)}
+              </div>
+              <div>
+                <strong>Gender Stats:</strong> {JSON.stringify(debugInfo.genderStatsRaw)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       {showFilters && (
         <Card>
@@ -304,7 +341,10 @@ export function DatabaseTable({
                 <Label htmlFor="gender">Gender</Label>
                 <Select
                   value={filters.gender}
-                  onValueChange={(value) => handleFilterChange("gender", value === "all" ? "" : value)}
+                  onValueChange={(value) => {
+                    console.log("Gender select changed to:", value)
+                    handleFilterChange("gender", value === "all" ? "" : value)
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All genders" />
@@ -322,9 +362,14 @@ export function DatabaseTable({
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t">
-              <Button variant="outline" onClick={clearFilters}>
-                Clear All Filters
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button variant="outline" onClick={clearFilters}>
+                  Clear All Filters
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Available genders: {filterOptions.genders.map((g) => `${g.label} (${g.count})`).join(", ")}
+                </div>
+              </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => handleExport("json")} disabled={exporting}>
                   <FileText className="w-4 h-4 mr-1" />

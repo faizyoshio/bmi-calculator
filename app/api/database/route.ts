@@ -39,23 +39,25 @@ export async function GET(request: NextRequest) {
     // Build filter query
     const filter: any = {}
 
+    // Exclude anonymous users from the table view first
+    filter.isAnonymous = { $ne: true }
+
     // Search filter (name contains search term)
-    if (search) {
-      filter.name = { $regex: search, $options: "i" }
+    if (search.trim()) {
+      filter.name = { $regex: search.trim(), $options: "i" }
     }
 
     // Category filter
-    if (category) {
-      filter.currentCategory = category
+    if (category.trim()) {
+      filter.currentCategory = category.trim()
     }
 
-    // Gender filter - ensure exact match
-    if (gender && (gender === "male" || gender === "female")) {
-      filter.gender = gender
+    // Gender filter - ensure exact match and handle case sensitivity
+    if (gender.trim() && (gender.toLowerCase() === "male" || gender.toLowerCase() === "female")) {
+      filter.gender = gender.toLowerCase()
     }
 
-    // Exclude anonymous users from the table view
-    filter.isAnonymous = { $ne: true }
+    console.log("Database filter query:", JSON.stringify(filter, null, 2))
 
     // Build sort object
     const sort: any = {}
@@ -80,7 +82,7 @@ export async function GET(request: NextRequest) {
           currentBmi: 1,
           currentCategory: 1,
           lastCalculation: 1,
-          bmiHistory: { $size: "$bmiHistory" },
+          bmiHistory: { $size: { $ifNull: ["$bmiHistory", []] } },
         })
         .toArray(),
       collection.countDocuments(filter),
@@ -95,33 +97,55 @@ export async function GET(request: NextRequest) {
     const formattedData = data.map((user) => ({
       id: user._id.toString(),
       name: user.name || "Anonymous",
-      gender: user.gender,
+      gender: user.gender || "unknown",
       age: user.age || "N/A",
-      height: user.height,
-      weight: user.weight,
+      height: user.height || 0,
+      weight: user.weight || 0,
       currentBmi: user.currentBmi ? Number.parseFloat(user.currentBmi.toFixed(2)) : null,
-      currentCategory: user.currentCategory,
-      lastCalculation: user.lastCalculation,
+      currentCategory: user.currentCategory || "Unknown",
+      lastCalculation: user.lastCalculation || new Date().toISOString(),
       calculationCount: user.bmiHistory || 0,
     }))
 
-    // Get category statistics for filters
+    // Get category statistics for filters - exclude anonymous users
     const categoryStats = await collection
       .aggregate([
-        { $match: { isAnonymous: { $ne: true } } },
+        { $match: { isAnonymous: { $ne: true }, currentCategory: { $exists: true, $ne: null } } },
         { $group: { _id: "$currentCategory", count: { $sum: 1 } } },
         { $sort: { _id: 1 } },
       ])
       .toArray()
 
-    // Get gender statistics for filters
+    // Get gender statistics for filters - exclude anonymous users and ensure gender exists
     const genderStats = await collection
       .aggregate([
-        { $match: { isAnonymous: { $ne: true } } },
+        {
+          $match: {
+            isAnonymous: { $ne: true },
+            gender: { $exists: true, $ne: null, $ne: "" },
+            $or: [{ gender: "male" }, { gender: "female" }],
+          },
+        },
         { $group: { _id: "$gender", count: { $sum: 1 } } },
         { $sort: { _id: 1 } },
       ])
       .toArray()
+
+    console.log("Gender statistics from database:", genderStats)
+
+    // Ensure both male and female options are always available, even with 0 counts
+    const allGenders = [
+      { value: "male", label: "Male", count: 0 },
+      { value: "female", label: "Female", count: 0 },
+    ]
+
+    // Update counts from database results
+    genderStats.forEach((stat) => {
+      const genderOption = allGenders.find((g) => g.value === stat._id)
+      if (genderOption) {
+        genderOption.count = stat.count
+      }
+    })
 
     const response = {
       data: formattedData,
@@ -138,21 +162,28 @@ export async function GET(request: NextRequest) {
           value: stat._id,
           count: stat.count,
         })),
-        genders: genderStats.map((stat) => ({
-          value: stat._id,
-          label: stat._id === "male" ? "Male" : "Female",
-          count: stat.count,
-        })),
+        genders: allGenders,
       },
       sort: {
         sortBy,
         sortOrder,
+      },
+      debug: {
+        appliedFilters: filter,
+        genderStatsRaw: genderStats,
+        totalRecords: await collection.countDocuments({ isAnonymous: { $ne: true } }),
       },
     }
 
     return NextResponse.json(response)
   } catch (error) {
     console.error("Database query error:", error)
-    return NextResponse.json({ error: "Failed to fetch database content" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to fetch database content",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

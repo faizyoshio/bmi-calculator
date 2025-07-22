@@ -13,32 +13,34 @@ export async function GET(request: NextRequest) {
 
     // Validate format
     if (!["json", "csv"].includes(format)) {
-      return NextResponse.json({ error: "Invalid export format" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid export format. Use 'json' or 'csv'" }, { status: 400 })
     }
 
     const { db } = await connectToDatabase()
     const collection = db.collection("users")
 
-    // Build filter query
+    // Build filter query (same logic as main API)
     const filter: any = {}
-
-    // Search filter (name contains search term)
-    if (search) {
-      filter.name = { $regex: search, $options: "i" }
-    }
-
-    // Category filter
-    if (category) {
-      filter.currentCategory = category
-    }
-
-    // Gender filter - ensure exact match
-    if (gender && (gender === "male" || gender === "female")) {
-      filter.gender = gender
-    }
 
     // Exclude anonymous users from export
     filter.isAnonymous = { $ne: true }
+
+    // Search filter
+    if (search.trim()) {
+      filter.name = { $regex: search.trim(), $options: "i" }
+    }
+
+    // Category filter
+    if (category.trim()) {
+      filter.currentCategory = category.trim()
+    }
+
+    // Gender filter - ensure exact match and handle case sensitivity
+    if (gender.trim() && (gender.toLowerCase() === "male" || gender.toLowerCase() === "female")) {
+      filter.gender = gender.toLowerCase()
+    }
+
+    console.log("Export filter query:", JSON.stringify(filter, null, 2))
 
     // Fetch all matching data (no pagination for export)
     const data = await collection
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest) {
         currentBmi: 1,
         currentCategory: 1,
         lastCalculation: 1,
-        bmiHistory: { $size: "$bmiHistory" },
+        bmiHistory: { $size: { $ifNull: ["$bmiHistory", []] } },
       })
       .toArray()
 
@@ -61,18 +63,18 @@ export async function GET(request: NextRequest) {
     const formattedData = data.map((user) => ({
       id: user._id.toString(),
       name: user.name || "Anonymous",
-      gender: user.gender,
+      gender: user.gender || "unknown",
       age: user.age || "N/A",
-      height: user.height,
-      weight: user.weight,
+      height: user.height || 0,
+      weight: user.weight || 0,
       currentBmi: user.currentBmi ? Number.parseFloat(user.currentBmi.toFixed(2)) : null,
-      currentCategory: user.currentCategory,
-      lastCalculation: user.lastCalculation,
+      currentCategory: user.currentCategory || "Unknown",
+      lastCalculation: user.lastCalculation || new Date().toISOString(),
       calculationCount: user.bmiHistory || 0,
     }))
 
     if (format === "csv") {
-      // Convert to CSV format
+      // Generate CSV
       const headers = [
         "ID",
         "Name",
@@ -118,7 +120,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       exportDate: new Date().toISOString(),
       totalRecords: formattedData.length,
-      filters: {
+      appliedFilters: {
         search: search || null,
         category: category || null,
         gender: gender || null,
@@ -127,6 +129,12 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Database export error:", error)
-    return NextResponse.json({ error: "Failed to export database content" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to export database content",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
