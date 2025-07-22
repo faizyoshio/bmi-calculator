@@ -1,26 +1,29 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { UserRepository } from "@/lib/mysql"
+import { connectToDatabase } from "@/lib/mongodb"
 
 export async function GET(request: NextRequest, { params }: { params: { name: string } }) {
   try {
+    const { db } = await connectToDatabase()
     const name = params.name
 
     if (!name) {
       return NextResponse.json({ error: "Name parameter is required" }, { status: 400 })
     }
 
-    const result = await UserRepository.getUserWithHistory(name)
+    const user = await db.collection("users").findOne(
+      { name: { $regex: new RegExp(`^${name}$`, "i") } },
+      {
+        projection: {
+          // No longer need to exclude ipAddress/userAgent as they are removed
+        },
+      },
+    )
 
-    if (!result.user) {
+    if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    return NextResponse.json({
-      user: {
-        ...result.user,
-        bmiHistory: result.history,
-      },
-    })
+    return NextResponse.json({ user })
   } catch (error) {
     console.error("Database fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch user data" }, { status: 500 })
@@ -29,15 +32,16 @@ export async function GET(request: NextRequest, { params }: { params: { name: st
 
 export async function DELETE(request: NextRequest, { params }: { params: { name: string } }) {
   try {
+    const { db } = await connectToDatabase()
     const name = params.name
 
     if (!name) {
       return NextResponse.json({ error: "Name parameter is required" }, { status: 400 })
     }
 
-    const deleted = await UserRepository.deleteUser(name)
+    const result = await db.collection("users").deleteOne({ name: { $regex: new RegExp(`^${name}$`, "i") } })
 
-    if (!deleted) {
+    if (result.deletedCount === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 

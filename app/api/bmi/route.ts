@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { UserRepository } from "@/lib/mysql"
+import { connectToDatabase } from "@/lib/mongodb"
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,33 +58,70 @@ export async function POST(request: NextRequest) {
       color = "red"
     }
 
-    // Save to MySQL database
+    // Save to users collection only
     try {
-      const result = await UserRepository.createOrUpdateUser({
-        name: name?.trim() || undefined,
+      const { db } = await connectToDatabase()
+
+      const currentCalculation = {
         gender,
         height: heightNum,
         weight: weightNum,
         age: ageNum,
         bmi: Number.parseFloat(bmi.toFixed(2)),
         category,
-      })
+        timestamp: new Date(),
+      }
 
-      console.log(`User record ${result.is_new_user ? "created" : "updated"} successfully`)
+      if (name) {
+        // If name is provided, update or create user record
+        const result = await db.collection("users").updateOne(
+          { name: name.trim().toLowerCase() },
+          {
+            $set: {
+              name: name.trim(),
+              lastCalculation: new Date(),
+              currentBMI: Number.parseFloat(bmi.toFixed(2)),
+              currentCategory: category,
+              currentHeight: heightNum,
+              currentWeight: weightNum,
+              currentAge: ageNum,
+              currentGender: gender,
+            },
+            $inc: { calculationCount: 1 },
+            $push: {
+              bmiHistory: {
+                $each: [currentCalculation],
+                $slice: -10, // Keep only last 10 calculations
+              },
+            },
+            $setOnInsert: {
+              createdAt: new Date(),
+            },
+          },
+          { upsert: true },
+        )
 
-      return NextResponse.json({
-        bmi: Number.parseFloat(bmi.toFixed(2)),
-        category,
-        gender,
-        height: heightNum,
-        weight: weightNum,
-        age: ageNum,
-        name: name || null,
-        healthTip,
-        color,
-        saved: true,
-        userId: result.user_id,
-      })
+        console.log(`User record updated successfully for: ${name}`)
+      } else {
+        // If no name provided, create anonymous user record
+        const anonymousUser = {
+          name: null,
+          isAnonymous: true,
+          createdAt: new Date(),
+          lastCalculation: new Date(),
+          currentBMI: Number.parseFloat(bmi.toFixed(2)),
+          currentCategory: category,
+          currentHeight: heightNum,
+          currentWeight: weightNum,
+          currentAge: ageNum,
+          currentGender: gender,
+          calculationCount: 1,
+          bmiHistory: [currentCalculation],
+        }
+
+        await db.collection("users").insertOne(anonymousUser)
+        console.log("Anonymous user record created successfully")
+      }
     } catch (dbError) {
       console.error("Database error:", dbError)
       // Continue without failing the request if database save fails
@@ -104,6 +141,19 @@ export async function POST(request: NextRequest) {
         { status: 200 },
       )
     }
+
+    return NextResponse.json({
+      bmi: Number.parseFloat(bmi.toFixed(2)),
+      category,
+      gender,
+      height: heightNum,
+      weight: weightNum,
+      age: ageNum,
+      name: name || null,
+      healthTip,
+      color,
+      saved: true,
+    })
   } catch (error) {
     console.error("BMI calculation error:", error)
     return NextResponse.json({ error: "Failed to calculate BMI" }, { status: 500 })
@@ -112,29 +162,42 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const { db } = await connectToDatabase()
     const { searchParams } = new URL(request.url)
     const name = searchParams.get("name")
 
+    let query = {}
     if (name) {
-      // Get specific user with history
-      const result = await UserRepository.getUserWithHistory(name)
-      if (!result.user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 })
-      }
-
-      // Transform history to match previous API format
-      const records = result.history.map((calculation: any) => ({
-        ...calculation,
-        name: result.user.name,
-        userId: result.user.id,
-      }))
-
-      return NextResponse.json({ records, count: records.length })
+      query = { name: { $regex: name, $options: "i" } }
     } else {
-      // Get recent calculations from all users
-      const records = await UserRepository.getRecentUsers(10)
-      return NextResponse.json({ records, count: records.length })
+      // If no name specified, get recent calculations from all users
+      query = { isAnonymous: { $ne: true } } // Exclude anonymous users for privacy
     }
+
+    const users = await db
+      .collection("users")
+      .find(query)
+      .sort({ lastCalculation: -1 })
+      .limit(10)
+      .project({
+        // Exclude sensitive information from public API
+        // No longer need to exclude ipAddress/userAgent as they are removed
+      })
+      .toArray()
+
+    // Transform data to match previous API format
+    const records = users
+      .flatMap(
+        (user) =>
+          user.bmiHistory?.map((calculation: any) => ({
+            ...calculation,
+            name: user.name,
+            userId: user._id,
+          })) || [],
+      )
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+    return NextResponse.json({ records: records.slice(0, 10), count: records.length })
   } catch (error) {
     console.error("Database fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch records" }, { status: 500 })
