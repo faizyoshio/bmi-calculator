@@ -10,47 +10,34 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || ""
     const category = searchParams.get("category") || ""
     const gender = searchParams.get("gender") || ""
-    const minAge = searchParams.get("minAge") ? Number.parseInt(searchParams.get("minAge")!) : null
-    const maxAge = searchParams.get("maxAge") ? Number.parseInt(searchParams.get("maxAge")!) : null
-    const minBmi = searchParams.get("minBmi") ? Number.parseFloat(searchParams.get("minBmi")!) : null
-    const maxBmi = searchParams.get("maxBmi") ? Number.parseFloat(searchParams.get("maxBmi")!) : null
 
     // Validate format
     if (!["json", "csv"].includes(format)) {
-      return NextResponse.json({ error: "Invalid format. Use 'json' or 'csv'" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid export format" }, { status: 400 })
     }
 
     const { db } = await connectToDatabase()
     const collection = db.collection("users")
 
-    // Build filter query (same as main database API)
+    // Build filter query
     const filter: any = {}
 
+    // Search filter (name contains search term)
     if (search) {
       filter.name = { $regex: search, $options: "i" }
     }
 
+    // Category filter
     if (category) {
       filter.currentCategory = category
     }
 
-    if (gender) {
+    // Gender filter - ensure exact match
+    if (gender && (gender === "male" || gender === "female")) {
       filter.gender = gender
     }
 
-    if (minAge !== null || maxAge !== null) {
-      filter.age = {}
-      if (minAge !== null) filter.age.$gte = minAge
-      if (maxAge !== null) filter.age.$lte = maxAge
-    }
-
-    if (minBmi !== null || maxBmi !== null) {
-      filter.currentBmi = {}
-      if (minBmi !== null) filter.currentBmi.$gte = minBmi
-      if (maxBmi !== null) filter.currentBmi.$lte = maxBmi
-    }
-
-    // Exclude anonymous users
+    // Exclude anonymous users from export
     filter.isAnonymous = { $ne: true }
 
     // Fetch all matching data (no pagination for export)
@@ -70,7 +57,7 @@ export async function GET(request: NextRequest) {
       })
       .toArray()
 
-    // Format data
+    // Format data for export
     const formattedData = data.map((user) => ({
       id: user._id.toString(),
       name: user.name || "Anonymous",
@@ -84,27 +71,42 @@ export async function GET(request: NextRequest) {
       calculationCount: user.bmiHistory || 0,
     }))
 
-    if (format === "json") {
-      return NextResponse.json({
-        data: formattedData,
-        exportedAt: new Date().toISOString(),
-        totalRecords: formattedData.length,
-        filters: {
-          search,
-          category,
-          gender,
-          minAge,
-          maxAge,
-          minBmi,
-          maxBmi,
-        },
-      })
-    }
+    if (format === "csv") {
+      // Convert to CSV format
+      const headers = [
+        "ID",
+        "Name",
+        "Gender",
+        "Age",
+        "Height (cm)",
+        "Weight (kg)",
+        "BMI",
+        "Category",
+        "Last Calculation",
+        "Total Calculations",
+      ]
 
-    // CSV format
-    if (formattedData.length === 0) {
-      return new NextResponse("No data to export", {
-        status: 200,
+      const csvRows = [
+        headers.join(","),
+        ...formattedData.map((user) =>
+          [
+            user.id,
+            `"${user.name}"`,
+            user.gender,
+            user.age,
+            user.height,
+            user.weight,
+            user.currentBmi || "N/A",
+            `"${user.currentCategory}"`,
+            new Date(user.lastCalculation).toLocaleDateString(),
+            user.calculationCount,
+          ].join(","),
+        ),
+      ]
+
+      const csvContent = csvRows.join("\n")
+
+      return new NextResponse(csvContent, {
         headers: {
           "Content-Type": "text/csv",
           "Content-Disposition": `attachment; filename="bmi-database-${new Date().toISOString().split("T")[0]}.csv"`,
@@ -112,47 +114,16 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Generate CSV headers
-    const headers = [
-      "ID",
-      "Name",
-      "Gender",
-      "Age",
-      "Height (cm)",
-      "Weight (kg)",
-      "BMI",
-      "Category",
-      "Last Calculation",
-      "Total Calculations",
-    ]
-
-    // Generate CSV rows
-    const csvRows = [
-      headers.join(","),
-      ...formattedData.map((user) =>
-        [
-          user.id,
-          `"${user.name}"`,
-          user.gender,
-          user.age,
-          user.height,
-          user.weight,
-          user.currentBmi || "N/A",
-          `"${user.currentCategory}"`,
-          new Date(user.lastCalculation).toLocaleDateString(),
-          user.calculationCount,
-        ].join(","),
-      ),
-    ]
-
-    const csvContent = csvRows.join("\n")
-
-    return new NextResponse(csvContent, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="bmi-database-${new Date().toISOString().split("T")[0]}.csv"`,
+    // Return JSON format
+    return NextResponse.json({
+      exportDate: new Date().toISOString(),
+      totalRecords: formattedData.length,
+      filters: {
+        search: search || null,
+        category: category || null,
+        gender: gender || null,
       },
+      data: formattedData,
     })
   } catch (error) {
     console.error("Database export error:", error)

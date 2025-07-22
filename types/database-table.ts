@@ -22,7 +22,7 @@ export interface PaginationInfo {
 
 export interface FilterOptions {
   categories: Array<{ value: string; count: number }>
-  genders: Array<{ value: string; label: string }>
+  genders: Array<{ value: string; label: string; count: number }>
 }
 
 export interface SortInfo {
@@ -41,8 +41,4 @@ export interface TableFilters {
   search: string
   category: string
   gender: string
-  minAge: string
-  maxAge: string
-  minBmi: string
-  maxBmi: string
 }

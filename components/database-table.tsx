@@ -55,10 +55,6 @@ export function DatabaseTable({
     search: "",
     category: "",
     gender: "",
-    minAge: "",
-    maxAge: "",
-    minBmi: "",
-    maxBmi: "",
   })
   const [filterOptions, setFilterOptions] = useState({
     categories: [],
@@ -140,10 +136,6 @@ export function DatabaseTable({
       search: "",
       category: "",
       gender: "",
-      minAge: "",
-      maxAge: "",
-      minBmi: "",
-      maxBmi: "",
     })
     setPagination((prev) => ({ ...prev, currentPage: 1 }))
   }
@@ -273,7 +265,7 @@ export function DatabaseTable({
             <CardTitle className="text-lg">Database Filters</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="search">Search Name</Label>
                 <div className="relative">
@@ -321,49 +313,11 @@ export function DatabaseTable({
                     <SelectItem value="all">All genders</SelectItem>
                     {filterOptions.genders.map((gender: any) => (
                       <SelectItem key={gender.value} value={gender.value}>
-                        {gender.label}
+                        {gender.label} ({gender.count})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div>
-                <Label>Age Range</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    value={filters.minAge}
-                    onChange={(e) => handleFilterChange("minAge", e.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={filters.maxAge}
-                    onChange={(e) => handleFilterChange("maxAge", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>BMI Range</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    step="0.1"
-                    placeholder="Min BMI"
-                    value={filters.minBmi}
-                    onChange={(e) => handleFilterChange("minBmi", e.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    step="0.1"
-                    placeholder="Max BMI"
-                    value={filters.maxBmi}
-                    onChange={(e) => handleFilterChange("maxBmi", e.target.value)}
-                  />
-                </div>
               </div>
             </div>
 

@@ -13,10 +13,6 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || ""
     const category = searchParams.get("category") || ""
     const gender = searchParams.get("gender") || ""
-    const minAge = searchParams.get("minAge") ? Number.parseInt(searchParams.get("minAge")!) : null
-    const maxAge = searchParams.get("maxAge") ? Number.parseInt(searchParams.get("maxAge")!) : null
-    const minBmi = searchParams.get("minBmi") ? Number.parseFloat(searchParams.get("minBmi")!) : null
-    const maxBmi = searchParams.get("maxBmi") ? Number.parseFloat(searchParams.get("maxBmi")!) : null
 
     // Validate parameters
     if (page < 1 || limit < 1 || limit > 100) {
@@ -53,23 +49,9 @@ export async function GET(request: NextRequest) {
       filter.currentCategory = category
     }
 
-    // Gender filter
-    if (gender) {
+    // Gender filter - ensure exact match
+    if (gender && (gender === "male" || gender === "female")) {
       filter.gender = gender
-    }
-
-    // Age range filter
-    if (minAge !== null || maxAge !== null) {
-      filter.age = {}
-      if (minAge !== null) filter.age.$gte = minAge
-      if (maxAge !== null) filter.age.$lte = maxAge
-    }
-
-    // BMI range filter
-    if (minBmi !== null || maxBmi !== null) {
-      filter.currentBmi = {}
-      if (minBmi !== null) filter.currentBmi.$gte = minBmi
-      if (maxBmi !== null) filter.currentBmi.$lte = maxBmi
     }
 
     // Exclude anonymous users from the table view
@@ -132,6 +114,15 @@ export async function GET(request: NextRequest) {
       ])
       .toArray()
 
+    // Get gender statistics for filters
+    const genderStats = await collection
+      .aggregate([
+        { $match: { isAnonymous: { $ne: true } } },
+        { $group: { _id: "$gender", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ])
+      .toArray()
+
     const response = {
       data: formattedData,
       pagination: {
@@ -147,10 +138,11 @@ export async function GET(request: NextRequest) {
           value: stat._id,
           count: stat.count,
         })),
-        genders: [
-          { value: "male", label: "Male" },
-          { value: "female", label: "Female" },
-        ],
+        genders: genderStats.map((stat) => ({
+          value: stat._id,
+          label: stat._id === "male" ? "Male" : "Female",
+          count: stat.count,
+        })),
       },
       sort: {
         sortBy,
