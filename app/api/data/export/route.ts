@@ -89,6 +89,15 @@ export async function GET(request: NextRequest) {
         data: formattedData,
         exportedAt: new Date().toISOString(),
         totalRecords: formattedData.length,
+        filters: {
+          search,
+          category,
+          gender,
+          minAge,
+          maxAge,
+          minBmi,
+          maxBmi,
+        },
       })
     }
 

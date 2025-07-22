@@ -1,387 +1,639 @@
 # BMI Calculator Application
 
-A comprehensive Body Mass Index (BMI) calculator built with Next.js, TypeScript, and MongoDB. This application provides BMI calculations with personalized health recommendations, multi-language support (English and Indonesian), and a complete data management system.
+A comprehensive Body Mass Index (BMI) calculator built with Next.js, TypeScript, and MongoDB. This application provides multilingual support (Indonesian and English), data persistence, personalized health recommendations, and an advanced data management interface.
 
-## Features
+## 🌟 Features
 
-- 🧮 **BMI Calculation**: Accurate BMI calculation with WHO standard categories
-- 👥 **User Management**: Named user profiles with calculation history
-- 🌐 **Multi-language Support**: English and Indonesian language options
-- 💡 **Personalized Tips**: Health recommendations based on BMI category, age, and gender
-- 📊 **Data Analytics**: Comprehensive data table with filtering, sorting, and export capabilities
-- 📱 **Responsive Design**: Mobile-friendly interface
-- 🔒 **Data Security**: Secure MongoDB integration with proper validation
-- 📈 **Health Tracking**: BMI history and progress tracking
-- 📋 **Export Features**: Data export in JSON and CSV formats
+### Core Features
+- **BMI Calculation**: Accurate BMI calculation with metric and imperial units
+- **Multilingual Support**: Indonesian and English language options
+- **Data Persistence**: MongoDB integration for storing user data and calculations
+- **Personalized Tips**: Health recommendations based on BMI category
+- **Responsive Design**: Mobile-first design that works on all devices
+- **Dark/Light Mode**: Theme switching capability
 
-## Prerequisites
+### Advanced Features
+- **Interactive Data Table**: Comprehensive data management interface at `/data`
+- **Advanced Filtering**: Search, category, gender, age, and BMI range filters
+- **Data Export**: Export data in JSON and CSV formats
+- **Real-time Analytics**: Live statistics and health monitoring
+- **API Integration**: RESTful API endpoints for data management
 
-Before you begin, ensure you have the following installed on your system:
+## 🚀 Quick Start
 
-- **Node.js** (version 18.0 or higher) - [Download here](https://nodejs.org/)
-- **npm** (comes with Node.js) or **yarn** package manager
-- **Git** (for cloning the repository) - [Download here](https://git-scm.com/)
-- **MongoDB Atlas Account** (for database) - [Sign up here](https://cloud.mongodb.com/)
-- **VS Code** (recommended code editor) - [Download here](https://code.visualstudio.com/)
+### Prerequisites
 
-## Installation
+Before you begin, ensure you have the following installed:
+- **Node.js** (version 18.0 or higher)
+- **npm** or **yarn** package manager
+- **MongoDB Atlas account** (for database)
+- **Git** (for version control)
+- **VS Code** (recommended editor)
 
-### Method 1: Clone from Repository
+### Installation
 
-1. **Clone the Repository**:
-   Open your terminal or VS Code integrated terminal and run:
+1. **Clone the repository**
    \`\`\`bash
-   git clone <your-repository-url>
+   git clone https://github.com/your-username/bmi-calculator.git
    cd bmi-calculator
    \`\`\`
 
-### Method 2: Download from v0
+2. **Install dependencies**
+   \`\`\`bash
+   npm install
+   # or
+   yarn install
+   \`\`\`
 
-1. **Download the Project**:
-   If you downloaded the project from v0, extract the ZIP file to your desired directory.
+3. **Set up environment variables**
+   
+   Create a `.env.local` file in the root directory:
+   \`\`\`bash
+   # In VS Code, right-click in Explorer and select "New File"
+   # Name it: .env.local
+   \`\`\`
+   
+   Add the following content:
+   \`\`\`env
+   MONGODB_URI=mongodb+srv://your-username:your-password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+   \`\`\`
 
-2. **Open in VS Code**:
-   Open VS Code and use `File > Open Folder` to open the project directory.
-   Alternatively, if you downloaded a `.zip` file from v0, extract it to your desired directory and open the folder in VS Code.
+4. **Start the development server**
+   \`\`\`bash
+   npm run dev
+   # or
+   yarn dev
+   \`\`\`
 
-3. **Install Dependencies**:
-   Open the integrated terminal in VS Code (`Ctrl+`` or `View > Terminal`) and navigate into the project directory. Then, install the necessary Node.js packages:
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
+## 🗄️ Database Setup
+
+### MongoDB Atlas Configuration
+
+1. **Create MongoDB Atlas Account**
+   - Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
+   - Sign up for a free account
+   - Create a new cluster
+
+2. **Configure Network Access**
+   - Go to "Network Access" in your Atlas dashboard
+   - Add IP Address: `0.0.0.0/0` (Allow access from anywhere)
+   - This is required for Vercel deployments
+
+3. **Create Database User**
+   - Go to "Database Access"
+   - Create a new database user
+   - Set username and password
+   - Grant "Read and write to any database" permissions
+
+4. **Get Connection String**
+   - Go to "Databases" → "Connect"
+   - Choose "Connect your application"
+   - Copy the connection string
+   - Replace `<password>` with your actual password
+
+### Database Structure
+
+The application automatically creates the following collections:
+
+#### `users` Collection
+\`\`\`javascript
+{
+  _id: ObjectId,
+  name: String,
+  gender: "male" | "female",
+  age: Number,
+  height: Number,
+  weight: Number,
+  currentBmi: Number,
+  currentCategory: String,
+  lastCalculation: Date,
+  bmiHistory: Array,
+  isAnonymous: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+\`\`\`
+
+## 📡 API Documentation
+
+### Core BMI API
+
+#### `POST /api/bmi`
+Calculate BMI and store user data.
+
+**Request Body:**
+\`\`\`json
+{
+  "name": "John Doe",
+  "gender": "male",
+  "age": 30,
+  "height": 175,
+  "weight": 70
+}
+\`\`\`
+
+**Response:**
+\`\`\`json
+{
+  "bmi": 22.86,
+  "category": "Normal weight",
+  "tips": ["Maintain your current weight...", "..."],
+  "user": {
+    "id": "user_id",
+    "name": "John Doe",
+    "calculationCount": 1
+  }
+}
+\`\`\`
+
+### Data Management API
+
+#### `GET /api/data`
+Retrieve paginated user data with advanced filtering and sorting.
+
+**Query Parameters:**
+- `page` (number): Page number (default: 1)
+- `limit` (number): Items per page (default: 10, max: 100)
+- `sortBy` (string): Sort field (name, gender, age, height, weight, currentBmi, currentCategory, lastCalculation)
+- `sortOrder` (string): Sort direction (asc, desc)
+- `search` (string): Search by name
+- `category` (string): Filter by BMI category
+- `gender` (string): Filter by gender (male, female)
+- `minAge` (number): Minimum age filter
+- `maxAge` (number): Maximum age filter
+- `minBmi` (number): Minimum BMI filter
+- `maxBmi` (number): Maximum BMI filter
+
+**Example Request:**
+\`\`\`
+GET /api/data?page=1&limit=25&sortBy=lastCalculation&sortOrder=desc&category=Normal weight&gender=male&minAge=25&maxAge=45
+\`\`\`
+
+**Response:**
+\`\`\`json
+{
+  "data": [
+    {
+      "id": "user_id",
+      "name": "John Doe",
+      "gender": "male",
+      "age": 30,
+      "height": 175,
+      "weight": 70,
+      "currentBmi": 22.86,
+      "currentCategory": "Normal weight",
+      "lastCalculation": "2024-01-15T10:30:00Z",
+      "calculationCount": 5
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 10,
+    "totalCount": 250,
+    "limit": 25,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  },
+  "filters": {
+    "categories": [
+      { "value": "Normal weight", "count": 120 },
+      { "value": "Overweight", "count": 80 }
+    ],
+    "genders": [
+      { "value": "male", "label": "Male" },
+      { "value": "female", "label": "Female" }
+    ]
+  },
+  "sort": {
+    "sortBy": "lastCalculation",
+    "sortOrder": "desc"
+  }
+}
+\`\`\`
+
+#### `GET /api/data/export`
+Export filtered data in JSON or CSV format.
+
+**Query Parameters:**
+- `format` (string): Export format (json, csv)
+- All filtering parameters from `/api/data` endpoint
+
+**Example Requests:**
+\`\`\`
+GET /api/data/export?format=csv&category=Overweight
+GET /api/data/export?format=json&gender=female&minAge=30
+\`\`\`
+
+**CSV Response:**
+\`\`\`csv
+ID,Name,Gender,Age,Height (cm),Weight (kg),BMI,Category,Last Calculation,Total Calculations
+user_id,"John Doe",male,30,175,70,22.86,"Normal weight",1/15/2024,5
+\`\`\`
+
+### Health & Analytics API
+
+#### `GET /api/health`
+Check database connection and system health.
+
+**Response:**
+\`\`\`json
+{
+  "status": "healthy",
+  "database": "connected",
+  "type": "mongodb",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+\`\`\`
+
+#### `GET /api/stats`
+Get application statistics and analytics.
+
+**Response:**
+\`\`\`json
+{
+  "totalUsers": 1250,
+  "totalCalculations": 3500,
+  "averageBmi": 24.2,
+  "categoryDistribution": {
+    "Underweight": 125,
+    "Normal weight": 625,
+    "Overweight": 375,
+    "Obese": 125
+  },
+  "genderDistribution": {
+    "male": 650,
+    "female": 600
+  },
+  "recentActivity": {
+    "last24Hours": 45,
+    "last7Days": 280,
+    "last30Days": 890
+  }
+}
+\`\`\`
+
+## 🎯 Interactive Data Table
+
+### Accessing the Data Table
+
+Navigate to `/data` in your application to access the comprehensive data management interface.
+
+### Features
+
+#### 🔍 **Advanced Filtering**
+- **Text Search**: Search users by name
+- **Category Filter**: Filter by BMI categories (Underweight, Normal weight, Overweight, Obese)
+- **Gender Filter**: Filter by male/female
+- **Age Range**: Set minimum and maximum age filters
+- **BMI Range**: Set minimum and maximum BMI filters
+
+#### 📊 **Sorting & Pagination**
+- **Column Sorting**: Click any column header to sort (ascending/descending)
+- **Flexible Pagination**: Choose page sizes (5, 10, 25, 50, 100 items)
+- **Navigation Controls**: First, previous, next, last page buttons
+
+#### 📤 **Data Export**
+- **JSON Export**: Download filtered data as JSON file
+- **CSV Export**: Download filtered data as CSV file
+- **Filtered Exports**: Export respects all active filters
+
+#### 🎨 **UI/UX Features**
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Loading States**: Skeleton loaders during data fetching
+- **Error Handling**: Comprehensive error messages with retry options
+- **Visual Indicators**: Color-coded BMI categories, sort direction arrows
+- **Real-time Updates**: Refresh button for latest data
+
+### Usage Examples
+
+1. **Search for specific users:**
+   - Enter name in search field
+   - Results update automatically
+
+2. **Filter by BMI category:**
+   - Select category from dropdown
+   - View count of users in each category
+
+3. **Export filtered data:**
+   - Apply desired filters
+   - Click "Export CSV" or "Export JSON"
+   - File downloads automatically
+
+4. **Sort by any column:**
+   - Click column header to sort
+   - Click again to reverse order
+   - Visual indicators show sort direction
+
+## 🚀 Deployment
+
+### Vercel Deployment
+
+1. **Install Vercel CLI**
+   \`\`\`bash
+   npm install -g vercel
+   \`\`\`
+
+2. **Login to Vercel**
+   \`\`\`bash
+   vercel login
+   \`\`\`
+
+3. **Deploy the application**
+   \`\`\`bash
+   vercel
+   \`\`\`
+
+4. **Set Environment Variables**
+   - Go to Vercel Dashboard
+   - Select your project
+   - Go to Settings → Environment Variables
+   - Add `MONGODB_URI` with your connection string
+
+5. **Redeploy**
+   \`\`\`bash
+   vercel --prod
+   \`\`\`
+
+### Environment Variables for Production
+
+\`\`\`env
+MONGODB_URI=your_mongodb_connection_string
+\`\`\`
+
+## 🔧 Development
+
+### Project Structure
+
+\`\`\`
+bmi-calculator/
+├── app/
+│   ├── api/
+│   │   ├── bmi/route.ts          # BMI calculation API
+│   │   ├── data/
+│   │   │   ├── route.ts          # Data retrieval API
+│   │   │   └── export/route.ts   # Data export API
+│   │   ├── health/route.ts       # Health check API
+│   │   └── stats/route.ts        # Statistics API
+│   ├── data/page.tsx             # Data table page
+│   ├── results/page.tsx          # BMI results page
+│   ├── layout.tsx                # Root layout
+│   ├── page.tsx                  # Home page
+│   └── globals.css               # Global styles
+├── components/
+│   ├── ui/                       # Reusable UI components
+│   ├── data-table.tsx           # Interactive data table
+│   └── language-switcher.tsx    # Language toggle
+├── lib/
+│   ├── mongodb.ts               # Database connection
+│   ├── language-context.tsx    # Language context
+│   └── utils.ts                 # Utility functions
+├── types/
+│   └── data-table.ts           # TypeScript types
+└── public/                     # Static assets
+\`\`\`
+
+### Available Scripts
+
+\`\`\`bash
+# Development
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+
+# Database
+npm run db:seed      # Seed database with sample data
+npm run db:migrate   # Run database migrations
+\`\`\`
+
+### Adding New Features
+
+1. **Create API endpoint**
+   \`\`\`typescript
+   // app/api/your-endpoint/route.ts
+   import { NextRequest, NextResponse } from "next/server"
+   
+   export async function GET(request: NextRequest) {
+     // Your logic here
+     return NextResponse.json({ data: "response" })
+   }
+   \`\`\`
+
+2. **Create UI component**
+   \`\`\`typescript
+   // components/your-component.tsx
+   "use client"
+   
+   export function YourComponent() {
+     return <div>Your component</div>
+   }
+   \`\`\`
+
+3. **Add to navigation**
+   Update `app/layout.tsx` to include your new page.
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Database Connection Issues
+
+**Problem**: `{"status":"unhealthy","database":"disconnected"}`
+
+**Solutions:**
+1. **Check MongoDB Atlas Network Access**
+   - Ensure `0.0.0.0/0` is in IP whitelist
+   - Verify cluster is running
+
+2. **Verify Connection String**
+   - Check username and password
+   - Ensure special characters are URL-encoded
+   - Verify cluster URL is correct
+
+3. **Check Environment Variables**
+   - Ensure `MONGODB_URI` is set correctly
+   - Redeploy after changing environment variables
+
+#### Build/Deployment Issues
+
+**Problem**: Build fails on Vercel
+
+**Solutions:**
+1. **Check TypeScript errors**
+   \`\`\`bash
+   npm run build
+   \`\`\`
+
+2. **Verify all dependencies**
    \`\`\`bash
    npm install
    \`\`\`
 
-4. **Set Up Environment Variables**:
-   Create a file named `.env.local` in the root of your project. You can do this directly in VS Code's Explorer panel. This file will store your sensitive environment variables, such as your MongoDB connection string.
+3. **Check environment variables**
+   - Ensure all required variables are set in Vercel
 
-   ```plaintext
-   # MongoDB Connection String (replace with your actual connection string)
-   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority&appName=<appName>
+#### Performance Issues
 
-   # Optional: Database name (defaults to 'bmi_calculator' if not set)
-   DB_NAME=bmi_calculator
+**Problem**: Slow data table loading
 
-   # Optional: Environment
-   NODE_ENV=development
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
+**Solutions:**
+1. **Add database indexes**
+   \`\`\`javascript
+   // In MongoDB Atlas or MongoDB Compass
+   db.users.createIndex({ "lastCalculation": -1 })
+   db.users.createIndex({ "currentCategory": 1 })
+   db.users.createIndex({ "name": "text" })
    \`\`\`
-   **Important**: Make sure to replace the placeholders (`<username>`, `<password>`, `<cluster-url>`, and `<appName>`) with your actual MongoDB Atlas credentials and cluster details. The `DB_NAME` should match the database you intend to use (e.g., `bmi_calculator`).
 
-## Database Setup (MongoDB Atlas)
+2. **Optimize queries**
+   - Use pagination
+   - Limit returned fields
+   - Add appropriate filters
+
+3. **Enable caching**
+   - Implement Redis caching
+   - Use Next.js caching strategies
+
+### Performance Optimization
+
+#### Database Optimization
+
+1. **Create Indexes**
+   \`\`\`javascript
+   // Recommended indexes for optimal performance
+   db.users.createIndex({ "lastCalculation": -1 })
+   db.users.createIndex({ "currentCategory": 1 })
+   db.users.createIndex({ "gender": 1 })
+   db.users.createIndex({ "age": 1 })
+   db.users.createIndex({ "currentBmi": 1 })
+   db.users.createIndex({ "name": "text" })
+   
+   // Compound indexes for common filter combinations
+   db.users.createIndex({ "currentCategory": 1, "gender": 1 })
+   db.users.createIndex({ "age": 1, "currentBmi": 1 })
+   \`\`\`
+
+2. **Query Optimization**
+   - Use projection to limit returned fields
+   - Implement proper pagination
+   - Use aggregation pipelines for complex queries
+
+#### Frontend Optimization
+
+1. **Implement Caching**
+   \`\`\`typescript
+   // Use React Query or SWR for data caching
+   import { useQuery } from 'react-query'
+   
+   const { data, isLoading } = useQuery(
+     ['data', filters, pagination],
+     () => fetchData(filters, pagination),
+     { staleTime: 5 * 60 * 1000 } // 5 minutes
+   )
+   \`\`\`
+
+2. **Debounce Search Input**
+   \`\`\`typescript
+   import { useDebouncedCallback } from 'use-debounce'
+   
+   const debouncedSearch = useDebouncedCallback(
+     (value) => setFilters(prev => ({ ...prev, search: value })),
+     300
+   )
+   \`\`\`
+
+#### Large Dataset Handling
+
+1. **Implement Virtual Scrolling**
+   - For tables with thousands of rows
+   - Use libraries like `react-window`
+
+2. **Server-Side Processing**
+   - Keep filtering and sorting on server
+   - Implement cursor-based pagination for very large datasets
+
+3. **Data Archiving**
+   - Archive old records to separate collections
+   - Implement data retention policies
+
+## 🤝 Contributing
+
+### Getting Started
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   \`\`\`bash
+   git checkout -b feature/your-feature-name
+   \`\`\`
+
+3. **Make your changes**
+4. **Test your changes**
+   \`\`\`bash
+   npm run test
+   npm run build
+   \`\`\`
+
+5. **Commit your changes**
+   \`\`\`bash
+   git commit -m "Add: your feature description"
+   \`\`\`
+
+6. **Push to your fork**
+   \`\`\`bash
+   git push origin feature/your-feature-name
+   \`\`\`
+
+7. **Create a Pull Request**
+
+### Development Guidelines
 
-If you don't have a MongoDB Atlas cluster set up, follow these steps:
-
-1. **Create a Cluster**:
-   - Sign up or log in to [MongoDB Atlas](https://cloud.mongodb.com/).
-   - Create a new "Shared Cluster" (M0 is free).
-   - Choose your preferred cloud provider and region.
-
-2. **Create a Database User**:
-   - In your Atlas project, go to "Database Access" under "Security".
-   - Click "Add New Database User".
-   - Choose a strong username and password. Remember these, as they will be part of your `MONGODB_URI`.
-   - Grant "Read and write to any database" privileges for simplicity, or more granular access if preferred.
-
-3. **Configure Network Access**:
-   - Go to "Network Access" under "Security".
-   - Click "Add IP Address".
-   - For local development, add your current IP address.
-   - **For Vercel deployment**, it is highly recommended to add `0.0.0.0/0` (Allow Access from Anywhere). This allows Vercel's dynamic IP addresses to connect to your database. You can restrict this later if needed.
-
-4. **Get Connection String**:
-   - Go to "Databases" in the left navigation.
-   - Click "Connect" on your cluster.
-   - Select "Connect your application".
-   - Choose "Node.js" and the latest version.
-   - Copy the provided connection string. This is your `MONGODB_URI`.
-
-## Usage
-
-### Running the Application Locally
-
-Once you have installed the dependencies and configured your environment variables, you can run the development server from your VS Code integrated terminal:
-
-\`\`\`bash
-npm run dev
-\`\`\`
-
-The application will be accessible at `http://localhost:3000`.
-
-### Using the BMI Calculator
-
-1. **Input Details**: On the main page, enter your name (optional), select your gender, and input your height (in cm), weight (in kg), and age (optional).
-2. **Calculate BMI**: Click the "Calculate BMI" button.
-3. **View Results**: You will be redirected to the results page, displaying your BMI score, category, and personalized health tips.
-4. **Language Switch**: Use the globe icon button in the top right corner to toggle between English and Indonesian.
-5. **Mark Tips Complete**: On the results page, you can mark personalized tips as "Complete" to track your progress.
-
-### Data Management
-
-Access the comprehensive data table at `/data` to:
-- View all BMI calculations in a sortable, filterable table
-- Export data in JSON or CSV format
-- Filter by BMI category, gender, age range, and more
-- Search users by name
-- Monitor application statistics
-
-## API Endpoints
-
-The application exposes the following API endpoints:
-
-### BMI Calculation APIs
-
-- **`POST /api/bmi`**: Calculates BMI and saves user data to the database.
-  - **Body**: `{ name?: string, gender: string, height: number, weight: number, age?: number }`
-  - **Response**: `{ bmi: number, category: string, tips: string[], user: object }`
-
-- **`GET /api/bmi`**: Fetches recent BMI calculation records (primarily for named users).
-  - **Query Params**: `name` (optional, to search for specific user records)
-  - **Response**: `{ records: [], count: number }`
-
-### User Management APIs
-
-- **`GET /api/user/[name]`**: Fetches a specific user's profile and BMI history by name.
-  - **Response**: `{ user: { name, gender, age, height, weight, currentBmi, currentCategory, bmiHistory, lastCalculation } }`
-
-- **`DELETE /api/user/[name]`**: Deletes a user's record by name.
-  - **Response**: `{ message: string }`
-
-- **`GET /api/users`**: Fetches a list of all named users with pagination.
-  - **Query Params**: 
-    - `limit` (optional, default 10, max 100)
-    - `skip` (optional, default 0)
-  - **Response**: `{ users: [], total: number, page: number, totalPages: number }`
-
-### Data Analytics APIs
-
-- **`GET /api/data`**: Comprehensive data retrieval with advanced filtering, sorting, and pagination.
-  - **Query Parameters**:
-    - `page` (number, default 1): Page number for pagination
-    - `limit` (number, default 10, max 100): Number of records per page
-    - `sortBy` (string, default "lastCalculation"): Field to sort by (name, gender, age, height, weight, currentBmi, currentCategory, lastCalculation)
-    - `sortOrder` (string, default "desc"): Sort order ("asc" or "desc")
-    - `search` (string): Search users by name (case-insensitive)
-    - `category` (string): Filter by BMI category (underweight, normal weight, overweight, obese)
-    - `gender` (string): Filter by gender (male, female)
-    - `minAge` (number): Minimum age filter
-    - `maxAge` (number): Maximum age filter
-    - `minBmi` (number): Minimum BMI filter
-    - `maxBmi` (number): Maximum BMI filter
-  - **Response**: 
-    \`\`\`json
-    {
-      "data": [
-        {
-          "id": "string",
-          "name": "string",
-          "gender": "male|female",
-          "age": "number|string",
-          "height": "number",
-          "weight": "number",
-          "currentBmi": "number|null",
-          "currentCategory": "string",
-          "lastCalculation": "string",
-          "calculationCount": "number"
-        }
-      ],
-      "pagination": {
-        "currentPage": "number",
-        "totalPages": "number",
-        "totalCount": "number",
-        "limit": "number",
-        "hasNextPage": "boolean",
-        "hasPrevPage": "boolean"
-      },
-      "filters": {
-        "categories": [{"value": "string", "count": "number"}],
-        "genders": [{"value": "string", "label": "string"}]
-      },
-      "sort": {
-        "sortBy": "string",
-        "sortOrder": "asc|desc"
-      }
-    }
-    \`\`\`
-
-- **`GET /api/data/export`**: Export filtered data in JSON or CSV format.
-  - **Query Parameters**:
-    - `format` (string, required): Export format ("json" or "csv")
-    - All filtering parameters from `/api/data` are supported
-  - **Response**: 
-    - JSON format: Returns structured data with metadata
-    - CSV format: Returns downloadable CSV file
-
-### System APIs
-
-- **`GET /api/stats`**: Provides application statistics and analytics.
-  - **Response**: 
-    \`\`\`json
-    {
-      "totalUsers": "number",
-      "totalCalculations": "number",
-      "categoryDistribution": {
-        "underweight": "number",
-        "normal weight": "number",
-        "overweight": "number",
-        "obese": "number"
-      },
-      "genderDistribution": {
-        "male": "number",
-        "female": "number"
-      },
-      "averageBmi": "number",
-      "recentActivity": "number"
-    }
-    \`\`\`
-
-- **`GET /api/health`**: Checks the database connection health and system status.
-  - **Response**: 
-    \`\`\`json
-    {
-      "status": "healthy|unhealthy",
-      "database": "connected|disconnected",
-      "type": "mongodb",
-      "timestamp": "string",
-      "uptime": "number",
-      "version": "string"
-    }
-    \`\`\`
-
-- **`POST /api/cleanup`**: Triggers a cleanup of sensitive data (e.g., old IP/User Agent fields).
-  - **Response**: `{ message: string, cleanedRecords: number }`
-
-## Data Table Features
-
-The `/data` page provides a comprehensive data management interface with:
-
-### 🔍 **Advanced Filtering**
-- **Text Search**: Search users by name with real-time filtering
-- **Category Filter**: Filter by BMI categories with record counts
-- **Gender Filter**: Filter by male/female
-- **Age Range**: Set minimum and maximum age filters
-- **BMI Range**: Filter by BMI value ranges
-- **Combined Filters**: Use multiple filters simultaneously
-
-### 📊 **Interactive Table**
-- **Column Sorting**: Click any column header to sort (ascending/descending)
-- **Visual Indicators**: Color-coded BMI categories and sort direction arrows
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Loading States**: Skeleton loaders during data fetching
-- **Empty States**: Helpful messages when no data is found
-
-### 📄 **Pagination & Display**
-- **Configurable Page Sizes**: 5, 10, 25, 50, or 100 records per page
-- **Navigation Controls**: First, previous, next, last page buttons
-- **Page Information**: Current page and total pages display
-- **Record Counts**: Shows current records and total count
-
-### 📤 **Export Capabilities**
-- **JSON Export**: Structured data export with metadata
-- **CSV Export**: Spreadsheet-compatible format
-- **Filtered Exports**: Export only the filtered data
-- **Automatic Downloads**: Browser-initiated file downloads
-
-### 🔄 **Real-time Features**
-- **Auto-refresh**: Manual refresh button to update data
-- **Filter Persistence**: Maintains filter state during navigation
-- **Error Handling**: Graceful error recovery with retry options
-- **Toast Notifications**: User feedback for actions and errors
-
-## Troubleshooting
-
-- **"Database disconnected" or "Failed to connect to MongoDB"**:
-  - **Check `MONGODB_URI`**: Ensure it's correctly formatted and includes your username and password.
-  - **MongoDB Atlas Network Access**: Make sure `0.0.0.0/0` (Allow Access from Anywhere) is added to your IP Whitelist in MongoDB Atlas.
-  - **Database User Credentials**: Verify the username and password for your database user in MongoDB Atlas.
-  - **Vercel Environment Variables**: If deployed, ensure the `MONGODB_URI` is correctly set in your Vercel project's environment variables. Redeploy after any changes.
-
-- **Validation Errors on Input**:
-  - Ensure height is between 50-300 cm and weight is between 20-500 kg.
-  - Name should be 2-50 characters and contain only letters and spaces.
-  - Age should be between 1-120 years.
-
-- **"Failed to calculate BMI"**:
-  - Check your network connection.
-  - Ensure both height and weight fields are filled with positive numbers.
-  - Review your server logs (if running locally or on Vercel) for more specific error messages from the API.
-
-- **Data Table Loading Issues**:
-  - Check the `/api/health` endpoint to verify database connectivity.
-  - Clear browser cache and cookies if experiencing persistent issues.
-  - Verify that your MongoDB user has proper read permissions.
-
-- **Export Functionality Problems**:
-  - Ensure your browser allows file downloads.
-  - Check that the data exists and matches your filter criteria.
-  - Try exporting smaller datasets if experiencing timeout issues.
-
-## Performance Optimization
-
-### Database Indexes
-The application uses optimized MongoDB indexes for better query performance:
-
-\`\`\`javascript
-// Recommended indexes for optimal performance
-db.users.createIndex({ "name": 1 })
-db.users.createIndex({ "currentCategory": 1 })
-db.users.createIndex({ "gender": 1 })
-db.users.createIndex({ "lastCalculation": -1 })
-db.users.createIndex({ "currentBmi": 1 })
-db.users.createIndex({ "age": 1 })
-db.users.createIndex({ "isAnonymous": 1 })
-
-// Compound indexes for common filter combinations
-db.users.createIndex({ "gender": 1, "currentCategory": 1 })
-db.users.createIndex({ "isAnonymous": 1, "lastCalculation": -1 })
-\`\`\`
-
-### Large Dataset Handling
-- **Pagination**: Efficient pagination prevents memory issues with large datasets
-- **Selective Projection**: Only necessary fields are retrieved from the database
-- **Query Optimization**: Optimized MongoDB aggregation pipelines
-- **Connection Pooling**: Proper database connection management
-
-## Deployment
-
-### Vercel Deployment
-
-1. **Push to GitHub**: Ensure your code is in a GitHub repository.
-
-2. **Connect to Vercel**:
-   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
-   - Click "New Project" and import your GitHub repository.
-
-3. **Set Environment Variables**:
-   - In your Vercel project settings, add the `MONGODB_URI` environment variable.
-   - Set it for both "Production" and "Preview" environments.
-
-4. **Deploy**: Vercel will automatically deploy your application.
-
-5. **Test**: Visit your deployed URL and test all functionality.
-
-## Contributing
-
-Contributions are welcome! If you'd like to contribute to this project, please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature-name`).
-3. Make your changes and commit them (`git commit -m 'Add new feature'`).
-4. Push to the branch (`git push origin feature/your-feature-name`).
-5. Open a Pull Request.
-
-Please ensure your code adheres to the existing style and includes relevant tests if applicable.
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-If you encounter any issues or have questions:
-
-1. Check the troubleshooting section above
-2. Review the API documentation for proper usage
-3. Ensure your MongoDB Atlas configuration is correct
-4. Check the `/api/health` endpoint for system status
-
-For additional support, please open an issue in the project repository.
+#### Code Style
+- Use TypeScript for all new code
+- Follow ESLint configuration
+- Use Prettier for code formatting
+- Write meaningful commit messages
+
+#### Testing
+- Write unit tests for new functions
+- Test API endpoints with different scenarios
+- Ensure responsive design works on all devices
+
+#### Documentation
+- Update README.md for new features
+- Add JSDoc comments for complex functions
+- Update API documentation
+
+### Reporting Issues
+
+When reporting issues, please include:
+- **Environment details** (Node.js version, browser, OS)
+- **Steps to reproduce** the issue
+- **Expected vs actual behavior**
+- **Screenshots** if applicable
+- **Error messages** from console/logs
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Next.js** - React framework
+- **MongoDB** - Database solution
+- **Tailwind CSS** - Styling framework
+- **shadcn/ui** - UI component library
+- **Vercel** - Deployment platform
+
+## 📞 Support
+
+For support and questions:
+- **GitHub Issues**: [Create an issue](https://github.com/your-username/bmi-calculator/issues)
+- **Documentation**: This README file
+- **API Reference**: See API Documentation section above
+
+---
+
+**Built with ❤️ using Next.js, TypeScript, and MongoDB**
