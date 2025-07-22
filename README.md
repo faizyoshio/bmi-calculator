@@ -33,35 +33,41 @@ Before you begin, ensure you have the following installed:
 ### Installation
 
 1. **Clone the repository**
-   \`\`\`bash
+   \`\`\`
    git clone https://github.com/your-username/bmi-calculator.git
    cd bmi-calculator
    \`\`\`
 
 2. **Install dependencies**
-   \`\`\`bash
+   \`\`\`
    npm install
-   # or
+   \`\`\`
+   
+   Or if you prefer yarn:
+   \`\`\`
    yarn install
    \`\`\`
 
 3. **Set up environment variables**
    
    Create a `.env.local` file in the root directory:
-   \`\`\`bash
+   \`\`\`
    # In VS Code, right-click in Explorer and select "New File"
    # Name it: .env.local
    \`\`\`
    
    Add the following content:
-   \`\`\`env
+   \`\`\`
    MONGODB_URI=mongodb+srv://your-username:your-password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
    \`\`\`
 
 4. **Start the development server**
-   \`\`\`bash
+   \`\`\`
    npm run dev
-   # or
+   \`\`\`
+   
+   Or with yarn:
+   \`\`\`
    yarn dev
    \`\`\`
 
@@ -332,17 +338,17 @@ Navigate to `/database` in your application to access the comprehensive database
 ### Vercel Deployment
 
 1. **Install Vercel CLI**
-   \`\`\`bash
+   \`\`\`
    npm install -g vercel
    \`\`\`
 
 2. **Login to Vercel**
-   \`\`\`bash
+   \`\`\`
    vercel login
    \`\`\`
 
 3. **Deploy the application**
-   \`\`\`bash
+   \`\`\`
    vercel
    \`\`\`
 
@@ -353,13 +359,13 @@ Navigate to `/database` in your application to access the comprehensive database
    - Add `MONGODB_URI` with your connection string
 
 5. **Redeploy**
-   \`\`\`bash
+   \`\`\`
    vercel --prod
    \`\`\`
 
 ### Environment Variables for Production
 
-\`\`\`env
+\`\`\`
 MONGODB_URI=your_mongodb_connection_string
 \`\`\`
 
@@ -397,17 +403,39 @@ bmi-calculator/
 
 ### Available Scripts
 
-\`\`\`bash
+\`\`\`
 # Development
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
-
-# Database
-npm run db:seed      # Seed database with sample data
-npm run db:migrate   # Run database migrations
 \`\`\`
+
+### Adding New Features
+
+1. **Create API endpoint**
+   \`\`\`typescript
+   // app/api/your-endpoint/route.ts
+   import { NextRequest, NextResponse } from "next/server"
+   
+   export async function GET(request: NextRequest) {
+     // Your logic here
+     return NextResponse.json({ data: "response" })
+   }
+   \`\`\`
+
+2. **Create UI component**
+   \`\`\`typescript
+   // components/your-component.tsx
+   "use client"
+   
+   export function YourComponent() {
+     return <div>Your component</div>
+   }
+   \`\`\`
+
+3. **Add to navigation**
+   Update `app/layout.tsx` to include your new page.
 
 ## 🔍 Troubleshooting
 
@@ -437,12 +465,12 @@ npm run db:migrate   # Run database migrations
 
 **Solutions:**
 1. **Check TypeScript errors**
-   \`\`\`bash
+   \`\`\`
    npm run build
    \`\`\`
 
 2. **Verify all dependencies**
-   \`\`\`bash
+   \`\`\`
    npm install
    \`\`\`
 
@@ -491,30 +519,68 @@ npm run db:migrate   # Run database migrations
    - Implement proper pagination
    - Use aggregation pipelines for complex queries
 
+#### Frontend Optimization
+
+1. **Implement Caching**
+   \`\`\`typescript
+   // Use React Query or SWR for data caching
+   import { useQuery } from 'react-query'
+   
+   const { data, isLoading } = useQuery(
+     ['database', filters, pagination],
+     () => fetchDatabaseContent(filters, pagination),
+     { staleTime: 5 * 60 * 1000 } // 5 minutes
+   )
+   \`\`\`
+
+2. **Debounce Search Input**
+   \`\`\`typescript
+   import { useDebouncedCallback } from 'use-debounce'
+   
+   const debouncedSearch = useDebouncedCallback(
+     (value) => setFilters(prev => ({ ...prev, search: value })),
+     300
+   )
+   \`\`\`
+
+#### Large Dataset Handling
+
+1. **Implement Virtual Scrolling**
+   - For tables with thousands of rows
+   - Use libraries like `react-window`
+
+2. **Server-Side Processing**
+   - Keep filtering and sorting on server
+   - Implement cursor-based pagination for very large datasets
+
+3. **Data Archiving**
+   - Archive old records to separate collections
+   - Implement data retention policies
+
 ## 🤝 Contributing
 
 ### Getting Started
 
 1. **Fork the repository**
 2. **Create a feature branch**
-   \`\`\`bash
+   \`\`\`
    git checkout -b feature/your-feature-name
    \`\`\`
 
 3. **Make your changes**
 4. **Test your changes**
-   \`\`\`bash
+   \`\`\`
    npm run test
    npm run build
    \`\`\`
 
 5. **Commit your changes**
-   \`\`\`bash
+   \`\`\`
    git commit -m "Add: your feature description"
    \`\`\`
 
 6. **Push to your fork**
-   \`\`\`bash
+   \`\`\`
    git push origin feature/your-feature-name
    \`\`\`
 
@@ -537,6 +603,15 @@ npm run db:migrate   # Run database migrations
 - Update README.md for new features
 - Add JSDoc comments for complex functions
 - Update API documentation
+
+### Reporting Issues
+
+When reporting issues, please include:
+- **Environment details** (Node.js version, browser, OS)
+- **Steps to reproduce** the issue
+- **Expected vs actual behavior**
+- **Screenshots** if applicable
+- **Error messages** from console/logs
 
 ## 📄 License
 
