@@ -28,26 +28,26 @@ To get the project up and running on your local machine, follow these steps:
 
 1.  **Clone the Repository (or Download)**:
     If you have access to the Git repository, clone it using your terminal (or VS Code's integrated terminal):
-    ```
+    \`\`\`
     git clone https://github.com/faizyoshio/bmi-calculator.git
     cd bmi-calculator
-    ```
+    \`\`\`
     Alternatively, if you downloaded a `.zip` file from v0, extract it to your desired directory and open the folder in VS Code.
 
 2.  **Install Dependencies**:
     Open the integrated terminal in VS Code (`Ctrl+\`` or `View > Terminal`) and navigate into the project directory. Then, install the necessary Node.js packages:
 
-    ```
+    \`\`\`
     npm install
-    ```
+    \`\`\`
 
 3.  **Set Up Environment Variables**:
     Create a file named `.env.local` in the root of your project. You can do this directly in VS Code's Explorer panel. This file will store your sensitive environment variables, such as your MongoDB connection string.
 
-    ```plaintext
+    \`\`\`plaintext
     # MongoDB Connection String (replace with your actual connection string)
     MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority&appName=<appName>
-    ```
+    \`\`\`
 
     # Optional: Database name (defaults to 'bmi_calculator' if not set)
     DB_NAME=bmi_calculator
@@ -55,7 +55,7 @@ To get the project up and running on your local machine, follow these steps:
     # Optional: Environment
     NODE_ENV=development
     NEXT_PUBLIC_APP_URL=http://localhost:3000
-    ```
+    \`\`\`
     **Important**: Make sure to replace the placeholders (`<username>`, `<password>`, `<cluster-url>`, and `<appName>`) with your actual MongoDB Atlas credentials and cluster details. The `DB_NAME` should match the database you intend to use (e.g., `bmi_calculator`).
 
 ## Database Setup (MongoDB Atlas)
@@ -92,9 +92,9 @@ If you don't have a MongoDB Atlas cluster set up, follow these steps:
 
 Once you have installed the dependencies and configured your environment variables, you can run the development server from your VS Code integrated terminal:
 
-```
+\`\`\`
 npm run dev
-```
+\`\`\`
 
 The application will be accessible at `http://localhost:3000`.
 
