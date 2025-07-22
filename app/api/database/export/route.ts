@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const { db } = await connectToDatabase()
     const collection = db.collection("users")
 
-    // Build filter query (same as main data API)
+    // Build filter query (same as main database API)
     const filter: any = {}
 
     if (search) {
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: {
           "Content-Type": "text/csv",
-          "Content-Disposition": `attachment; filename="bmi-data-${new Date().toISOString().split("T")[0]}.csv"`,
+          "Content-Disposition": `attachment; filename="bmi-database-${new Date().toISOString().split("T")[0]}.csv"`,
         },
       })
     }
@@ -151,11 +151,11 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="bmi-data-${new Date().toISOString().split("T")[0]}.csv"`,
+        "Content-Disposition": `attachment; filename="bmi-database-${new Date().toISOString().split("T")[0]}.csv"`,
       },
     })
   } catch (error) {
-    console.error("Export error:", error)
-    return NextResponse.json({ error: "Failed to export data" }, { status: 500 })
+    console.error("Database export error:", error)
+    return NextResponse.json({ error: "Failed to export database content" }, { status: 500 })
   }
 }

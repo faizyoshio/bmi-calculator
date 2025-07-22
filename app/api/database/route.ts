@@ -161,6 +161,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response)
   } catch (error) {
     console.error("Database query error:", error)
-    return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch database content" }, { status: 500 })
   }
 }

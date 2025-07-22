@@ -1,6 +1,6 @@
 # BMI Calculator Application
 
-A comprehensive Body Mass Index (BMI) calculator built with Next.js, TypeScript, and MongoDB. This application provides multilingual support (Indonesian and English), data persistence, personalized health recommendations, and an advanced data management interface.
+A comprehensive Body Mass Index (BMI) calculator built with Next.js, TypeScript, and MongoDB. This application provides multilingual support (Indonesian and English), data persistence, personalized health recommendations, and an advanced database management interface.
 
 ## 🌟 Features
 
@@ -13,9 +13,9 @@ A comprehensive Body Mass Index (BMI) calculator built with Next.js, TypeScript,
 - **Dark/Light Mode**: Theme switching capability
 
 ### Advanced Features
-- **Interactive Data Table**: Comprehensive data management interface at `/data`
+- **Database Viewer**: Comprehensive database content interface at `/database`
 - **Advanced Filtering**: Search, category, gender, age, and BMI range filters
-- **Data Export**: Export data in JSON and CSV formats
+- **Data Export**: Export database content in JSON and CSV formats
 - **Real-time Analytics**: Live statistics and health monitoring
 - **API Integration**: RESTful API endpoints for data management
 
@@ -149,10 +149,10 @@ Calculate BMI and store user data.
 }
 \`\`\`
 
-### Data Management API
+### Database Management API
 
-#### `GET /api/data`
-Retrieve paginated user data with advanced filtering and sorting.
+#### `GET /api/database`
+Retrieve paginated database content with advanced filtering and sorting.
 
 **Query Parameters:**
 - `page` (number): Page number (default: 1)
@@ -169,7 +169,7 @@ Retrieve paginated user data with advanced filtering and sorting.
 
 **Example Request:**
 \`\`\`
-GET /api/data?page=1&limit=25&sortBy=lastCalculation&sortOrder=desc&category=Normal weight&gender=male&minAge=25&maxAge=45
+GET /api/database?page=1&limit=25&sortBy=lastCalculation&sortOrder=desc&category=Normal weight&gender=male&minAge=25&maxAge=45
 \`\`\`
 
 **Response:**
@@ -214,17 +214,17 @@ GET /api/data?page=1&limit=25&sortBy=lastCalculation&sortOrder=desc&category=Nor
 }
 \`\`\`
 
-#### `GET /api/data/export`
-Export filtered data in JSON or CSV format.
+#### `GET /api/database/export`
+Export filtered database content in JSON or CSV format.
 
 **Query Parameters:**
 - `format` (string): Export format (json, csv)
-- All filtering parameters from `/api/data` endpoint
+- All filtering parameters from `/api/database` endpoint
 
 **Example Requests:**
 \`\`\`
-GET /api/data/export?format=csv&category=Overweight
-GET /api/data/export?format=json&gender=female&minAge=30
+GET /api/database/export?format=csv&category=Overweight
+GET /api/database/export?format=json&gender=female&minAge=30
 \`\`\`
 
 **CSV Response:**
@@ -275,16 +275,16 @@ Get application statistics and analytics.
 }
 \`\`\`
 
-## 🎯 Interactive Data Table
+## 🗄️ Database Content Viewer
 
-### Accessing the Data Table
+### Accessing the Database Viewer
 
-Navigate to `/data` in your application to access the comprehensive data management interface.
+Navigate to `/database` in your application to access the comprehensive database content management interface.
 
 ### Features
 
 #### 🔍 **Advanced Filtering**
-- **Text Search**: Search users by name
+- **Text Search**: Search users by name with real-time filtering
 - **Category Filter**: Filter by BMI categories (Underweight, Normal weight, Overweight, Obese)
 - **Gender Filter**: Filter by male/female
 - **Age Range**: Set minimum and maximum age filters
@@ -296,8 +296,8 @@ Navigate to `/data` in your application to access the comprehensive data managem
 - **Navigation Controls**: First, previous, next, last page buttons
 
 #### 📤 **Data Export**
-- **JSON Export**: Download filtered data as JSON file
-- **CSV Export**: Download filtered data as CSV file
+- **JSON Export**: Download filtered database content as JSON file
+- **CSV Export**: Download filtered database content as CSV file
 - **Filtered Exports**: Export respects all active filters
 
 #### 🎨 **UI/UX Features**
@@ -305,7 +305,7 @@ Navigate to `/data` in your application to access the comprehensive data managem
 - **Loading States**: Skeleton loaders during data fetching
 - **Error Handling**: Comprehensive error messages with retry options
 - **Visual Indicators**: Color-coded BMI categories, sort direction arrows
-- **Real-time Updates**: Refresh button for latest data
+- **Real-time Updates**: Refresh button for latest database content
 
 ### Usage Examples
 
@@ -317,7 +317,7 @@ Navigate to `/data` in your application to access the comprehensive data managem
    - Select category from dropdown
    - View count of users in each category
 
-3. **Export filtered data:**
+3. **Export filtered database content:**
    - Apply desired filters
    - Click "Export CSV" or "Export JSON"
    - File downloads automatically
@@ -371,28 +371,28 @@ MONGODB_URI=your_mongodb_connection_string
 bmi-calculator/
 ├── app/
 │   ├── api/
-│   │   ├── bmi/route.ts          # BMI calculation API
-│   │   ├── data/
-│   │   │   ├── route.ts          # Data retrieval API
-│   │   │   └── export/route.ts   # Data export API
-│   │   ├── health/route.ts       # Health check API
-│   │   └── stats/route.ts        # Statistics API
-│   ├── data/page.tsx             # Data table page
-│   ├── results/page.tsx          # BMI results page
-│   ├── layout.tsx                # Root layout
-│   ├── page.tsx                  # Home page
-│   └── globals.css               # Global styles
+│   │   ├── bmi/route.ts              # BMI calculation API
+│   │   ├── database/
+│   │   │   ├── route.ts              # Database content retrieval API
+│   │   │   └── export/route.ts       # Database content export API
+│   │   ├── health/route.ts           # Health check API
+│   │   └── stats/route.ts            # Statistics API
+│   ├── database/page.tsx             # Database content viewer page
+│   ├── results/page.tsx              # BMI results page
+│   ├── layout.tsx                    # Root layout
+│   ├── page.tsx                      # Home page
+│   └── globals.css                   # Global styles
 ├── components/
-│   ├── ui/                       # Reusable UI components
-│   ├── data-table.tsx           # Interactive data table
-│   └── language-switcher.tsx    # Language toggle
+│   ├── ui/                           # Reusable UI components
+│   ├── database-table.tsx           # Interactive database table
+│   └── language-switcher.tsx        # Language toggle
 ├── lib/
-│   ├── mongodb.ts               # Database connection
-│   ├── language-context.tsx    # Language context
-│   └── utils.ts                 # Utility functions
+│   ├── mongodb.ts                   # Database connection
+│   ├── language-context.tsx        # Language context
+│   └── utils.ts                     # Utility functions
 ├── types/
-│   └── data-table.ts           # TypeScript types
-└── public/                     # Static assets
+│   └── database-table.ts           # TypeScript types
+└── public/                         # Static assets
 \`\`\`
 
 ### Available Scripts
@@ -408,32 +408,6 @@ npm run lint         # Run ESLint
 npm run db:seed      # Seed database with sample data
 npm run db:migrate   # Run database migrations
 \`\`\`
-
-### Adding New Features
-
-1. **Create API endpoint**
-   \`\`\`typescript
-   // app/api/your-endpoint/route.ts
-   import { NextRequest, NextResponse } from "next/server"
-   
-   export async function GET(request: NextRequest) {
-     // Your logic here
-     return NextResponse.json({ data: "response" })
-   }
-   \`\`\`
-
-2. **Create UI component**
-   \`\`\`typescript
-   // components/your-component.tsx
-   "use client"
-   
-   export function YourComponent() {
-     return <div>Your component</div>
-   }
-   \`\`\`
-
-3. **Add to navigation**
-   Update `app/layout.tsx` to include your new page.
 
 ## 🔍 Troubleshooting
 
@@ -477,7 +451,7 @@ npm run db:migrate   # Run database migrations
 
 #### Performance Issues
 
-**Problem**: Slow data table loading
+**Problem**: Slow database table loading
 
 **Solutions:**
 1. **Add database indexes**
@@ -492,10 +466,6 @@ npm run db:migrate   # Run database migrations
    - Use pagination
    - Limit returned fields
    - Add appropriate filters
-
-3. **Enable caching**
-   - Implement Redis caching
-   - Use Next.js caching strategies
 
 ### Performance Optimization
 
@@ -520,44 +490,6 @@ npm run db:migrate   # Run database migrations
    - Use projection to limit returned fields
    - Implement proper pagination
    - Use aggregation pipelines for complex queries
-
-#### Frontend Optimization
-
-1. **Implement Caching**
-   \`\`\`typescript
-   // Use React Query or SWR for data caching
-   import { useQuery } from 'react-query'
-   
-   const { data, isLoading } = useQuery(
-     ['data', filters, pagination],
-     () => fetchData(filters, pagination),
-     { staleTime: 5 * 60 * 1000 } // 5 minutes
-   )
-   \`\`\`
-
-2. **Debounce Search Input**
-   \`\`\`typescript
-   import { useDebouncedCallback } from 'use-debounce'
-   
-   const debouncedSearch = useDebouncedCallback(
-     (value) => setFilters(prev => ({ ...prev, search: value })),
-     300
-   )
-   \`\`\`
-
-#### Large Dataset Handling
-
-1. **Implement Virtual Scrolling**
-   - For tables with thousands of rows
-   - Use libraries like `react-window`
-
-2. **Server-Side Processing**
-   - Keep filtering and sorting on server
-   - Implement cursor-based pagination for very large datasets
-
-3. **Data Archiving**
-   - Archive old records to separate collections
-   - Implement data retention policies
 
 ## 🤝 Contributing
 
@@ -605,15 +537,6 @@ npm run db:migrate   # Run database migrations
 - Update README.md for new features
 - Add JSDoc comments for complex functions
 - Update API documentation
-
-### Reporting Issues
-
-When reporting issues, please include:
-- **Environment details** (Node.js version, browser, OS)
-- **Steps to reproduce** the issue
-- **Expected vs actual behavior**
-- **Screenshots** if applicable
-- **Error messages** from console/logs
 
 ## 📄 License
 
