@@ -110,25 +110,60 @@ The application will be accessible at `http://localhost:3000`.
 
 The application exposes the following API endpoints:
 
+#### BMI Calculation & User Management
 *   **`POST /api/bmi`**: Calculates BMI and saves user data to the database.
     *   **Body**: `{ name?: string, gender: string, height: number, weight: number, age?: number }`
-    *   **Response**: `{ bmi: number, category: string, ... }`
+    *   **Response**: `{ bmi: number, category: string, tips: [], user: {} }`
+
 *   **`GET /api/bmi`**: Fetches recent BMI calculation records (primarily for named users).
     *   **Query Params**: `name` (optional, to search for specific user records)
     *   **Response**: `{ records: [], count: number }`
+
 *   **`GET /api/user/[name]`**: Fetches a specific user's profile and BMI history by name.
     *   **Response**: `{ user: {} }`
+
 *   **`DELETE /api/user/[name]`**: Deletes a user's record by name.
     *   **Response**: `{ message: string }`
+
 *   **`GET /api/users`**: Fetches a list of all named users.
     *   **Query Params**: `limit` (optional, default 10), `skip` (optional, default 0)
     *   **Response**: `{ users: [], total: number, page: number, totalPages: number }`
+
+#### Data Management & Analytics
+*   **`GET /api/data`**: Retrieves paginated, sortable, and filterable data from the database.
+    *   **Query Params**: 
+        - `page` (default: 1) - Page number
+        - `limit` (default: 10) - Items per page
+        - `sortBy` (default: 'createdAt') - Sort field
+        - `sortOrder` (default: 'desc') - Sort direction (asc/desc)
+        - `search` - Search term for name filtering
+        - `category` - Filter by BMI category
+        - `gender` - Filter by gender
+        - `minAge`, `maxAge` - Age range filter
+        - `minBmi`, `maxBmi` - BMI range filter
+    *   **Response**: `{ data: [], pagination: { total, page, totalPages, hasNext, hasPrev } }`
+
+*   **`GET /api/data/export`**: Exports data in JSON or CSV format.
+    *   **Query Params**: `format` (json/csv), plus all filtering params from `/api/data`
+    *   **Response**: File download or JSON data
+
 *   **`GET /api/stats`**: Provides application statistics (total users, category distribution, etc.).
-    *   **Response**: `{ totalUsers: number, categoryDistribution: {}, ... }`
+    *   **Response**: `{ totalUsers: number, categoryDistribution: {}, averageBmi: number, ageDistribution: {} }`
+
+#### System Health & Maintenance
 *   **`GET /api/health`**: Checks the database connection health.
-    *   **Response**: `{ status: "healthy" | "unhealthy", database: "connected" | "disconnected", ... }`
+    *   **Response**: `{ status: "healthy" | "unhealthy", database: "connected" | "disconnected", type: "mongodb", timestamp: string }`
+
 *   **`POST /api/cleanup`**: Triggers a cleanup of sensitive data (e.g., old IP/User Agent fields).
-    *   **Response**: `{ message: string }`
+    *   **Response**: `{ message: string, deletedCount: number }`
+
+#### Data Table Features
+The `/api/data` endpoint supports advanced features for the interactive data table:
+- **Pagination**: Efficient handling of large datasets
+- **Sorting**: Sort by any field (name, bmi, category, age, gender, createdAt)
+- **Filtering**: Multiple filter options including search, category, gender, age range, BMI range
+- **Export**: Download filtered data as JSON or CSV
+- **Performance**: Optimized queries with proper indexing
 
 ## Troubleshooting
 
