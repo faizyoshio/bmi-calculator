@@ -130,12 +130,15 @@ export default function BMICalculator() {
 
         router.push("/results")
       } else {
+        // Log the full error response from the API
+        console.error("API Error Response:", result)
         throw new Error(result.error || "Failed to calculate BMI")
       }
     } catch (error) {
+      console.error("Submission Error:", error)
       toast({
         title: t("calculationError"),
-        description: t("calculationErrorDesc"),
+        description: error instanceof Error ? error.message : t("calculationErrorDesc"),
         variant: "destructive",
       })
     } finally {

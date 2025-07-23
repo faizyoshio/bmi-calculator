@@ -1,106 +1,68 @@
 import { MongoClient, type Db } from "mongodb"
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("Please add your MongoDB URI to .env.local")
-}
+// -----------------------------------------------------------------------------
+//  MongoDB connection utility
+//  ‣ Uses a singleton pattern in development to avoid creating multiple clients
+//  ‣ Exposes helper functions connectToDatabase() & checkDatabaseHealth()
+// -----------------------------------------------------------------------------
 
 const uri = process.env.MONGODB_URI
-const options = {
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-  connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
-  family: 4, // Use IPv4, skip trying IPv6
+const dbName = process.env.DB_NAME || "bmi_calculator"
+
+if (!uri) {
+  throw new Error("Missing `MONGODB_URI`.\nAdd it to your environment variables (.env.local).")
 }
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
 
 if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  // Re-use the same client in development (Next.js hot-reload friendly)
   const globalWithMongo = global as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>
   }
 
   if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options)
+    client = new MongoClient(uri)
     globalWithMongo._mongoClientPromise = client.connect()
   }
+
   clientPromise = globalWithMongo._mongoClientPromise
 } else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options)
+  // Always create a new client in production
+  client = new MongoClient(uri, {
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 10000,
+  })
   clientPromise = client.connect()
 }
 
+/**
+ * Establish (or re-use) a connection and return the client & db handles.
+ */
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
-  try {
-    const client = await clientPromise
-    const db = client.db(process.env.DB_NAME || "bmi_calculator") // Use DB_NAME from env or default
+  const client = await clientPromise
+  const db = client.db(dbName)
 
-    // Test the connection
-    await db.command({ ping: 1 })
-    console.log("Successfully connected to MongoDB")
-
-    return { client, db }
-  } catch (error) {
-    console.error("Failed to connect to MongoDB:", error)
-    throw error
-  }
+  return { client, db }
 }
 
-// Utility function to check database health
+/**
+ * Ping the database once to make sure the connection is healthy.
+ * Returns `true` if successful, otherwise logs the error and returns `false`.
+ */
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
     const { db } = await connectToDatabase()
     await db.command({ ping: 1 })
     return true
   } catch (error) {
-    console.error("Database health check failed:", error)
+    console.error("MongoDB health check failed:", error)
     return false
   }
 }
 
-// Utility function to create indexes for better performance
-export async function createIndexes(): Promise<void> {
-  try {
-    const { db } = await connectToDatabase()
-
-    // Create indexes on users collection
-    await db.collection("users").createIndex({ name: 1 })
-    await db.collection("users").createIndex({ lastCalculation: -1 })
-    await db.collection("users").createIndex({ currentCategory: 1 })
-    await db.collection("users").createIndex({ isAnonymous: 1 })
-
-    console.log("Database indexes created successfully")
-  } catch (error) {
-    console.error("Failed to create database indexes:", error)
-  }
-}
-
-// Utility function to clean up old IP and User Agent data
-export async function cleanupSensitiveData(): Promise<void> {
-  try {
-    const { db } = await connectToDatabase()
-
-    // Remove IP and User Agent fields from all user documents
-    await db.collection("users").updateMany(
-      {},
-      {
-        $unset: {
-          lastIpAddress: "",
-          lastUserAgent: "",
-          "bmiHistory.$[].ipAddress": "",
-          "bmiHistory.$[].userAgent": "",
-        },
-      },
-    )
-
-    console.log("Sensitive data cleanup completed successfully")
-  } catch (error) {
-    console.error("Failed to cleanup sensitive data:", error)
-  }
-}
-
+// Default export kept for any legacy imports
 export default clientPromise
