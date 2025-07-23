@@ -506,29 +506,33 @@ export function DatabaseTable({
                         Category {getSortIcon("currentCategory")}
                       </Button>
                     </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("lastCalculation")}
+                      >
+                        Last Calculation {getSortIcon("lastCalculation")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Total Calculations</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     Array.from({ length: pagination.limit }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 7 }).map(
-                          (
-                            _,
-                            cellIndex, // Adjusted colSpan
-                          ) => (
-                            <TableCell key={cellIndex}>
-                              <Skeleton className="h-4 w-full" />
-                            </TableCell>
-                          ),
-                        )}
+                        {Array.from({ length: 9 }).map((_, cellIndex) => (
+                          <TableCell key={cellIndex}>
+                            <Skeleton className="h-4 w-full" />
+                          </TableCell>
+                        ))}
                       </TableRow>
                     ))
                   ) : data.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
-                        {" "}
-                        {/* Adjusted colSpan */}
+                      <TableCell colSpan={9} className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
                           <Database className="w-8 h-8 text-muted-foreground" />
                           <p className="text-muted-foreground">No database records found</p>
@@ -551,14 +555,9 @@ export function DatabaseTable({
                         <TableCell>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex items-center gap-1">
-                                <span className="font-medium">
-                                  {user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}
-                                </span>
-                                <Badge className={getBmiCategoryColor(user.currentCategory)}>
-                                  {user.currentCategory}
-                                </Badge>
-                              </div>
+                              <span className="font-medium">
+                                {user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}
+                              </span>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>BMI: {user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}</p>
@@ -567,8 +566,13 @@ export function DatabaseTable({
                             </TooltipContent>
                           </Tooltip>
                         </TableCell>
+                        <TableCell>
+                          <Badge className={getBmiCategoryColor(user.currentCategory)}>{user.currentCategory}</Badge>
+                        </TableCell>
                         <TableCell>{new Date(user.lastCalculation).toLocaleDateString()}</TableCell>
-                        {/* Removed Total Calculations column */}
+                        <TableCell>
+                          <Badge variant="secondary">{user.calculationCount}</Badge>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
