@@ -19,6 +19,7 @@ import {
   ArrowUp,
   ArrowDown,
   Search,
+  Filter,
   RefreshCw,
   Database,
   AlertCircle,
@@ -61,7 +62,7 @@ export function DatabaseTable({
     categories: [],
     genders: [],
   })
-  const [showFilters, setShowFilters] = useState(true) // Filters are always shown now
+  const [showFilters, setShowFilters] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [debugInfo, setDebugInfo] = useState<any>(null)
 
@@ -272,7 +273,10 @@ export function DatabaseTable({
               <p className="text-sm text-muted-foreground mt-1">{description}</p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Removed "Show Filters" button */}
+              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+                <Filter className="w-4 h-4 mr-1" />
+                {showFilters ? "Hide Filters" : "Show Filters"}
+              </Button>
               <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
                 <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
                 Refresh
@@ -308,7 +312,7 @@ export function DatabaseTable({
       )}
 
       {/* Filters */}
-      {showFilters && ( // This block will now always be visible
+      {showFilters && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Database Filters</CardTitle>
@@ -512,30 +516,23 @@ export function DatabaseTable({
                         Last Calculation {getSortIcon("lastCalculation")}
                       </Button>
                     </TableHead>
-                    {/* Removed Total Calculations TableHead */}
+                    <TableHead>Total Calculations</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     Array.from({ length: pagination.limit }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 8 }).map(
-                          (
-                            _,
-                            cellIndex, // Adjusted colSpan from 9 to 8
-                          ) => (
-                            <TableCell key={cellIndex}>
-                              <Skeleton className="h-4 w-full" />
-                            </TableCell>
-                          ),
-                        )}
+                        {Array.from({ length: 9 }).map((_, cellIndex) => (
+                          <TableCell key={cellIndex}>
+                            <Skeleton className="h-4 w-full" />
+                          </TableCell>
+                        ))}
                       </TableRow>
                     ))
                   ) : data.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        {" "}
-                        {/* Adjusted colSpan from 9 to 8 */}
+                      <TableCell colSpan={9} className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
                           <Database className="w-8 h-8 text-muted-foreground" />
                           <p className="text-muted-foreground">No database records found</p>
@@ -573,7 +570,9 @@ export function DatabaseTable({
                           <Badge className={getBmiCategoryColor(user.currentCategory)}>{user.currentCategory}</Badge>
                         </TableCell>
                         <TableCell>{new Date(user.lastCalculation).toLocaleDateString()}</TableCell>
-                        {/* Removed Total Calculations TableCell */}
+                        <TableCell>
+                          <Badge variant="secondary">{user.calculationCount}</Badge>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}

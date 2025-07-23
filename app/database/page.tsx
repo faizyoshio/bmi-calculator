@@ -1,28 +1,30 @@
 "use client"
 
 import { DatabaseTable } from "@/components/database-table"
+import { Toaster } from "@/components/ui/toaster"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useLanguage } from "@/lib/language-context"
-import { LanguageSwitcher } from "@/components/language-switcher"
+import { ArrowLeftIcon } from "lucide-react"
 
 export default function DatabasePage() {
   const router = useRouter()
-  const { t } = useLanguage()
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-purple-50 p-4 dark:from-gray-900 dark:to-black">
-      <div className="w-full max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t("back")}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-4">
+      <div className="max-w-7xl mx-auto py-8">
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
+            <ArrowLeftIcon className="h-4 w-4" />
+            {"Back"}
           </Button>
-          <LanguageSwitcher />
+          {/* You can add other elements here if needed, like a title or filters */}
         </div>
-        <DatabaseTable />
+        <DatabaseTable
+          title="Database Content Viewer"
+          description="Browse, filter, and export BMI calculation records from the database"
+        />
       </div>
+      <Toaster />
     </div>
   )
 }
