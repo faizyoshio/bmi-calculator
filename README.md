@@ -52,7 +52,7 @@ Before you begin, ensure you have the following installed:
    
    Create a `.env.local` file in the root directory:
    \`\`\`
-   MONGODB_URI=mongodb+srv://mardonbleu28:lEL6F4v7IVnJFPSa@cluster0.qsj25c7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+   MONGODB_URI=
    \`\`\`
 
 4. **Run the development server**
