@@ -29,6 +29,7 @@ import {
 import { toast } from "@/hooks/use-toast"
 import type { User, DatabaseTableResponse, TableFilters } from "@/types/database-table"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useLanguage } from "@/lib/language-context" // Import useLanguage
 
 interface DatabaseTableProps {
   title?: string
@@ -39,6 +40,7 @@ export function DatabaseTable({
   title = "BMI Calculator Database",
   description = "View and manage BMI calculation records stored in the database",
 }: DatabaseTableProps) {
+  const { t } = useLanguage() // Get translation function
   const [data, setData] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,17 +100,17 @@ export function DatabaseTable({
       // Log filter options for debugging
       console.log("Filter options received:", result.filters)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch database content"
+      const errorMessage = err instanceof Error ? err.message : t("failed_to_fetch_database_content")
       setError(errorMessage)
       toast({
-        title: "Database Error",
+        title: t("database_error"),
         description: errorMessage,
         variant: "destructive",
       })
     } finally {
       setLoading(false)
     }
-  }, [pagination.currentPage, pagination.limit, sortBy, sortOrder, filters])
+  }, [pagination.currentPage, pagination.limit, sortBy, sortOrder, filters, t])
 
   useEffect(() => {
     fetchData()
@@ -163,7 +165,7 @@ export function DatabaseTable({
       const response = await fetch(`/api/database/export?${params}`)
 
       if (!response.ok) {
-        throw new Error("Database export failed")
+        throw new Error(t("database_export_failed"))
       }
 
       if (format === "csv") {
@@ -190,13 +192,13 @@ export function DatabaseTable({
       }
 
       toast({
-        title: "Export Successful",
-        description: `Database content exported as ${format.toUpperCase()}`,
+        title: t("export_successful"),
+        description: t("data_exported_as", { format: format.toUpperCase() }),
       })
     } catch (err) {
       toast({
-        title: "Export Failed",
-        description: "Failed to export database content",
+        title: t("export_failed"),
+        description: t("failed_to_export_database_content"),
         variant: "destructive",
       })
     } finally {
@@ -227,15 +229,15 @@ export function DatabaseTable({
   const getHealthTip = (category: string) => {
     switch (category?.toLowerCase()) {
       case "underweight":
-        return "Consider consulting a nutritionist to develop a healthy weight gain plan. Focus on nutrient-dense foods and regular exercise to build muscle mass."
+        return t("healthTips.underweight")
       case "normal weight":
-        return "Great job! Maintain your healthy weight through balanced nutrition and regular physical activity. Keep up the good work!"
+        return t("healthTips.normal")
       case "overweight":
-        return "Consider adopting a balanced diet and increasing physical activity. Small lifestyle changes can make a big difference in your health."
+        return t("healthTips.overweight")
       case "obese":
-        return "We recommend consulting with a healthcare professional to develop a comprehensive weight management plan. Focus on gradual, sustainable changes."
+        return t("healthTips.obese")
       default:
-        return "No specific health tip available for this category."
+        return t("no_specific_health_tip")
     }
   }
 
@@ -249,7 +251,7 @@ export function DatabaseTable({
               {error}
               <Button variant="outline" size="sm" className="ml-2 bg-transparent" onClick={fetchData}>
                 <RefreshCw className="w-4 h-4 mr-1" />
-                Retry
+                {t("retry")}
               </Button>
             </AlertDescription>
           </Alert>
@@ -267,15 +269,14 @@ export function DatabaseTable({
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Database className="w-5 h-5" />
-                {title}
+                {t("database_title")}
               </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">{description}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t("database_description")}</p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Removed "Show Filters" button */}
               <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
                 <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
-                Refresh
+                {t("refresh")}
               </Button>
             </div>
           </div>
@@ -288,19 +289,19 @@ export function DatabaseTable({
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <Info className="w-4 h-4" />
-              Debug Information
+              {t("debug_information")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs space-y-2">
               <div>
-                <strong>Total Records:</strong> {debugInfo.totalRecords}
+                <strong>{t("total_records")}:</strong> {debugInfo.totalRecords}
               </div>
               <div>
-                <strong>Applied Filters:</strong> {JSON.stringify(debugInfo.appliedFilters)}
+                <strong>{t("applied_filters")}:</strong> {JSON.stringify(debugInfo.appliedFilters)}
               </div>
               <div>
-                <strong>Gender Stats:</strong> {JSON.stringify(debugInfo.genderStatsRaw)}
+                <strong>{t("gender_stats")}:</strong> {JSON.stringify(debugInfo.genderStatsRaw)}
               </div>
             </div>
           </CardContent>
@@ -311,17 +312,17 @@ export function DatabaseTable({
       {showFilters && ( // This block will now always be visible
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Database Filters</CardTitle>
+            <CardTitle className="text-lg">{t("database_filters")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="search">Search Name</Label>
+                <Label htmlFor="search">{t("search_name")}</Label>
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="search"
-                    placeholder="Search by name..."
+                    placeholder={t("search_by_name_placeholder")}
                     value={filters.search}
                     onChange={(e) => handleFilterChange("search", e.target.value)}
                     className="pl-8"
@@ -330,19 +331,19 @@ export function DatabaseTable({
               </div>
 
               <div>
-                <Label htmlFor="category">BMI Category</Label>
+                <Label htmlFor="category">{t("bmi_category")}</Label>
                 <Select
                   value={filters.category}
                   onValueChange={(value) => handleFilterChange("category", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All categories" />
+                    <SelectValue placeholder={t("all_categories")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
+                    <SelectItem value="all">{t("all_categories")}</SelectItem>
                     {filterOptions.categories.map((cat: any) => (
                       <SelectItem key={cat.value} value={cat.value}>
-                        {cat.value} ({cat.count})
+                        {t(cat.value.toLowerCase().replace(/\s/g, "_"))} ({cat.count})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -350,7 +351,7 @@ export function DatabaseTable({
               </div>
 
               <div>
-                <Label htmlFor="gender">Gender</Label>
+                <Label htmlFor="gender">{t("gender")}</Label>
                 <Select
                   value={filters.gender}
                   onValueChange={(value) => {
@@ -359,13 +360,13 @@ export function DatabaseTable({
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All genders" />
+                    <SelectValue placeholder={t("all_genders")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All genders</SelectItem>
+                    <SelectItem value="all">{t("all_genders")}</SelectItem>
                     {filterOptions.genders.map((gender: any) => (
                       <SelectItem key={gender.value} value={gender.value}>
-                        {gender.label} ({gender.count})
+                        {t(gender.label.toLowerCase())} ({gender.count})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -376,20 +377,18 @@ export function DatabaseTable({
             <div className="flex justify-between items-center pt-4 border-t">
               <div className="flex items-center gap-4">
                 <Button variant="outline" onClick={clearFilters}>
-                  Clear All Filters
+                  {t("clear_all_filters")}
                 </Button>
-                <div className="text-sm text-muted-foreground">
-                  Available genders: {filterOptions.genders.map((g) => `${g.label} (${g.count})`).join(", ")}
-                </div>
+                {/* Removed "Available genders" text */}
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => handleExport("json")} disabled={exporting}>
                   <FileText className="w-4 h-4 mr-1" />
-                  Export JSON
+                  {t("export_json")}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleExport("csv")} disabled={exporting}>
                   <FileSpreadsheet className="w-4 h-4 mr-1" />
-                  Export CSV
+                  {t("export_csv")}
                 </Button>
               </div>
             </div>
@@ -404,12 +403,15 @@ export function DatabaseTable({
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                Showing {data.length} of {pagination.totalCount} database records
+                {t("showing_records", {
+                  count: data.length,
+                  total: pagination.totalCount,
+                })}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Label htmlFor="limit" className="text-sm">
-                Records per page:
+                {t("records_per_page")}:
               </Label>
               <Select value={pagination.limit.toString()} onValueChange={handleLimitChange}>
                 <SelectTrigger className="w-20">
@@ -439,7 +441,7 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("name")}
                       >
-                        Name {getSortIcon("name")}
+                        {t("name")} {getSortIcon("name")}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -449,7 +451,7 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("gender")}
                       >
-                        Gender {getSortIcon("gender")}
+                        {t("gender")} {getSortIcon("gender")}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -459,7 +461,7 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("age")}
                       >
-                        Age {getSortIcon("age")}
+                        {t("age")} {getSortIcon("age")}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -469,7 +471,7 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("height")}
                       >
-                        Height (cm) {getSortIcon("height")}
+                        {t("height")} ({t("cm")}) {getSortIcon("height")}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -479,7 +481,7 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("weight")}
                       >
-                        Weight (kg) {getSortIcon("weight")}
+                        {t("weight")} ({t("kg")}) {getSortIcon("weight")}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -489,7 +491,7 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("currentBmi")}
                       >
-                        BMI {getSortIcon("currentBmi")}
+                        {t("bmi")} {getSortIcon("currentBmi")}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -499,7 +501,7 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("currentCategory")}
                       >
-                        Category {getSortIcon("currentCategory")}
+                        {t("category")} {getSortIcon("currentCategory")}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -509,10 +511,9 @@ export function DatabaseTable({
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleSort("lastCalculation")}
                       >
-                        Last Calculation {getSortIcon("lastCalculation")}
+                        {t("lastCalculation")} {getSortIcon("lastCalculation")}
                       </Button>
                     </TableHead>
-                    {/* Removed Total Calculations TableHead */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -538,9 +539,9 @@ export function DatabaseTable({
                         {/* Adjusted colSpan from 9 to 8 */}
                         <div className="flex flex-col items-center gap-2">
                           <Database className="w-8 h-8 text-muted-foreground" />
-                          <p className="text-muted-foreground">No database records found</p>
+                          <p className="text-muted-foreground">{t("no_database_records_found")}</p>
                           <Button variant="outline" size="sm" onClick={clearFilters}>
-                            Clear Filters
+                            {t("clear_filters")}
                           </Button>
                         </div>
                       </TableCell>
@@ -550,7 +551,7 @@ export function DatabaseTable({
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell className="capitalize">
-                          {user.gender === "unknown" ? "Unknown" : user.gender}
+                          {user.gender === "unknown" ? t("unknown") : t(user.gender)}
                         </TableCell>
                         <TableCell>{user.age === "N/A" ? "N/A" : user.age}</TableCell>
                         <TableCell>{user.height === 0 ? "N/A" : user.height}</TableCell>
@@ -564,16 +565,21 @@ export function DatabaseTable({
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>BMI: {user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}</p>
-                              <p>Category: {user.currentCategory}</p>
-                              <p>Health Tip: {getHealthTip(user.currentCategory)}</p>
+                              <p>
+                                {t("category")}: {t(user.currentCategory.toLowerCase().replace(/\s/g, "_"))}
+                              </p>
+                              <p>
+                                {t("health_tip")}: {getHealthTip(user.currentCategory)}
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getBmiCategoryColor(user.currentCategory)}>{user.currentCategory}</Badge>
+                          <Badge className={getBmiCategoryColor(user.currentCategory)}>
+                            {t(user.currentCategory.toLowerCase().replace(/\s/g, "_"))}
+                          </Badge>
                         </TableCell>
                         <TableCell>{new Date(user.lastCalculation).toLocaleDateString()}</TableCell>
-                        {/* Removed Total Calculations TableCell */}
                       </TableRow>
                     ))
                   )}
@@ -586,7 +592,10 @@ export function DatabaseTable({
           {!loading && data.length > 0 && (
             <div className="flex items-center justify-between p-4 border-t">
               <div className="text-sm text-muted-foreground">
-                Page {pagination.currentPage} of {pagination.totalPages}
+                {t("page_of_total", {
+                  currentPage: pagination.currentPage,
+                  totalPages: pagination.totalPages,
+                })}
               </div>
               <div className="flex items-center gap-2">
                 <Button
