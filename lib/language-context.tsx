@@ -8,7 +8,7 @@ type Language = "en" | "id"
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (key: string, options?: { [key: string]: any }) => string
+  t: (key: string) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
@@ -24,8 +24,8 @@ const translations = {
     gender: "Gender",
     male: "Male",
     female: "Female",
-    height: "Height",
-    weight: "Weight",
+    height: "Height (cm)",
+    weight: "Weight (kg)",
     age: "Age (optional)",
     heightPlaceholder: "Enter your height",
     weightPlaceholder: "Enter your weight",
@@ -37,19 +37,6 @@ const translations = {
     personalizedFor: "Personalized for",
     welcomeMessage: "Welcome!",
     dataStoredMessage: "Hello {name}! Your data has been securely stored.",
-    view_database: "View Database",
-    select_gender: "Select Gender",
-    other: "Other",
-    your_name: "Your Name",
-    height_cm: "Height (cm)",
-    weight_kg: "Weight (kg)",
-    error: "Error",
-    please_fill_all_fields: "Please fill all required fields.",
-    please_enter_valid_numbers: "Please enter valid positive numbers.",
-    failed_to_calculate_bmi: "Failed to calculate BMI.",
-    failed_to_calculate_bmi_try_again: "Failed to calculate BMI. Please try again.",
-    success: "Success",
-    enter_your_details: "Enter your details",
 
     // Validation messages
     nameRange: "Name must be between 2-50 characters",
@@ -65,7 +52,7 @@ const translations = {
     calculationErrorDesc: "Failed to calculate BMI. Please try again.",
 
     // Results page
-    your_bmi_result: "Your BMI Result",
+    yourResult: "Your BMI Result",
     loadingResults: "Loading Your Results",
     preparingInsights: "Preparing your personalized health insights...",
     bodyMassIndex: "Body Mass Index",
@@ -87,16 +74,10 @@ const translations = {
     markIncomplete: "Undo",
     findProfessional: "Find Professional",
     progressSummary: "Your Progress",
-    your_bmi_is: "Your BMI is",
-    which_is: "Which is",
-    recalculate_bmi: "Recalculate BMI",
-    health_tip: "Health Tip",
-    no_specific_health_tip: "No specific health tip available for this category.",
-    unknown: "Unknown",
 
     // BMI Categories
     underweight: "Underweight",
-    normal_weight: "Normal Weight",
+    normal: "Normal",
     overweight: "Overweight",
     obese: "Obese",
 
@@ -188,37 +169,6 @@ const translations = {
         desc: "Include resistance training to combat age-related muscle loss and maintain bone density. Consider joint-friendly exercises.",
       },
     },
-
-    // Database page specific
-    back: "Back",
-    database_title: "BMI Calculator Database",
-    database_description: "View and manage BMI calculation records stored in the database",
-    refresh: "Refresh",
-    debug_information: "Debug Information",
-    total_records: "Total Records",
-    applied_filters: "Applied Filters",
-    gender_stats: "Gender Stats",
-    database_filters: "Database Filters",
-    search_name: "Search Name",
-    search_by_name_placeholder: "Search by name...",
-    bmi_category: "BMI Category",
-    all_categories: "All categories",
-    all_genders: "All genders",
-    clear_all_filters: "Clear All Filters",
-    export_json: "Export JSON",
-    export_csv: "Export CSV",
-    showing_records: "Showing {count} of {total} database records",
-    records_per_page: "Records per page",
-    lastCalculation: "Last Calculation",
-    no_database_records_found: "No database records found",
-    clear_filters: "Clear Filters",
-    page_of_total: "Page {currentPage} of {totalPages}",
-    database_error: "Database Error",
-    failed_to_fetch_database_content: "Failed to fetch database content",
-    export_successful: "Export Successful",
-    data_exported_as: "Data exported as {format}",
-    export_failed: "Export Failed",
-    failed_to_export_database_content: "Failed to export database content",
   },
   id: {
     // Main page
@@ -229,9 +179,9 @@ const translations = {
     optional: "opsional",
     gender: "Jenis Kelamin",
     male: "Pria",
-    female: "Wanala",
-    height: "Tinggi Badan",
-    weight: "Berat Badan",
+    female: "Wanita",
+    height: "Tinggi Badan (cm)",
+    weight: "Berat Badan (kg)",
     age: "Usia (opsional)",
     heightPlaceholder: "Masukkan tinggi badan Anda",
     weightPlaceholder: "Masukkan berat badan Anda",
@@ -243,19 +193,6 @@ const translations = {
     personalizedFor: "Dipersonalisasi untuk",
     welcomeMessage: "Selamat datang!",
     dataStoredMessage: "Halo {name}! Data Anda telah disimpan dengan aman.",
-    view_database: "Lihat Database",
-    select_gender: "Pilih Jenis Kelamin",
-    other: "Lainnya",
-    your_name: "Nama Anda",
-    height_cm: "Tinggi Badan (cm)",
-    weight_kg: "Berat Badan (kg)",
-    error: "Kesalahan",
-    please_fill_all_fields: "Harap isi semua kolom yang wajib diisi.",
-    please_enter_valid_numbers: "Harap masukkan angka positif yang valid.",
-    failed_to_calculate_bmi: "Gagal menghitung BMI.",
-    failed_to_calculate_bmi_try_again: "Gagal menghitung BMI. Silakan coba lagi.",
-    success: "Berhasil",
-    enter_your_details: "Masukkan detail Anda",
 
     // Validation messages
     nameRange: "Nama harus antara 2-50 karakter",
@@ -271,7 +208,7 @@ const translations = {
     calculationErrorDesc: "Gagal menghitung BMI. Silakan coba lagi.",
 
     // Results page
-    your_bmi_result: "Hasil BMI Anda",
+    yourResult: "Hasil BMI Anda",
     loadingResults: "Memuat Hasil Anda",
     preparingInsights: "Menyiapkan wawasan kesehatan personal Anda...",
     bodyMassIndex: "Indeks Massa Tubuh",
@@ -293,17 +230,11 @@ const translations = {
     markIncomplete: "Batal",
     findProfessional: "Cari Profesional",
     progressSummary: "Kemajuan Anda",
-    your_bmi_is: "BMI Anda adalah",
-    which_is: "Yang termasuk",
-    recalculate_bmi: "Hitung Ulang BMI",
-    health_tip: "Tips Kesehatan",
-    no_specific_health_tip: "Tidak ada tips kesehatan spesifik untuk kategori ini.",
-    unknown: "Tidak Diketahui",
 
     // BMI Categories
     underweight: "Kurus",
-    normal_weight: "Berat Badan Normal",
-    overweight: "Berat Badan Berlebih",
+    normal: "Normal",
+    overweight: "Gemuk",
     obese: "Obesitas",
 
     // Units
@@ -394,37 +325,6 @@ const translations = {
         desc: "Sertakan latihan resistensi untuk melawan kehilangan otot terkait usia dan menjaga kepadatan tulang. Pertimbangkan olahraga yang ramah sendi.",
       },
     },
-
-    // Database page specific
-    back: "Kembali",
-    database_title: "Database Kalkulator BMI",
-    database_description: "Lihat dan kelola catatan perhitungan BMI yang tersimpan di database",
-    refresh: "Segarkan",
-    debug_information: "Informasi Debug",
-    total_records: "Total Catatan",
-    applied_filters: "Filter yang Diterapkan",
-    gender_stats: "Statistik Jenis Kelamin",
-    database_filters: "Filter Database",
-    search_name: "Cari Nama",
-    search_by_name_placeholder: "Cari berdasarkan nama...",
-    bmi_category: "Kategori BMI",
-    all_categories: "Semua kategori",
-    all_genders: "Semua jenis kelamin",
-    clear_all_filters: "Hapus Semua Filter",
-    export_json: "Ekspor JSON",
-    export_csv: "Ekspor CSV",
-    showing_records: "Menampilkan {count} dari {total} catatan database",
-    records_per_page: "Catatan per halaman",
-    lastCalculation: "Perhitungan Terakhir",
-    no_database_records_found: "Tidak ada catatan database ditemukan",
-    clear_filters: "Hapus Filter",
-    page_of_total: "Halaman {currentPage} dari {totalPages}",
-    database_error: "Kesalahan Database",
-    failed_to_fetch_database_content: "Gagal mengambil konten database",
-    export_successful: "Ekspor Berhasil",
-    data_exported_as: "Data diekspor sebagai {format}",
-    export_failed: "Ekspor Gagal",
-    failed_to_export_database_content: "Gagal mengekspor konten database",
   },
 }
 
@@ -444,7 +344,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("bmi-calculator-language", lang)
   }
 
-  const t = (key: string, options?: { [key: string]: any }): string => {
+  const t = (key: string): string => {
     const keys = key.split(".")
     let value: any = translations[language]
 
@@ -465,16 +365,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    let translatedString = typeof value === "string" ? value : key
-
-    // Replace placeholders if options are provided
-    if (options) {
-      for (const optionKey in options) {
-        translatedString = translatedString.replace(`{${optionKey}}`, options[optionKey])
-      }
-    }
-
-    return translatedString
+    return typeof value === "string" ? value : key
   }
 
   return (
