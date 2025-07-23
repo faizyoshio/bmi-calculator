@@ -19,7 +19,6 @@ import {
   ArrowUp,
   ArrowDown,
   Search,
-  Filter,
   RefreshCw,
   Database,
   AlertCircle,
@@ -62,7 +61,8 @@ export function DatabaseTable({
     categories: [],
     genders: [],
   })
-  const [showFilters, setShowFilters] = useState(false)
+  // Set showFilters to true by default since the toggle button is removed
+  const [showFilters, setShowFilters] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [debugInfo, setDebugInfo] = useState<any>(null)
 
@@ -273,10 +273,7 @@ export function DatabaseTable({
               <p className="text-sm text-muted-foreground mt-1">{description}</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-                <Filter className="w-4 h-4 mr-1" />
-                {showFilters ? "Hide Filters" : "Show Filters"}
-              </Button>
+              {/* Removed "Show Filters" button */}
               <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
                 <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
                 Refresh
@@ -312,7 +309,7 @@ export function DatabaseTable({
       )}
 
       {/* Filters */}
-      {showFilters && (
+      {showFilters && ( // This block will now always be visible
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Database Filters</CardTitle>

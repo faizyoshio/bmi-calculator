@@ -1,14 +1,21 @@
 "use client"
 
-import type React from "react"
+import { useEffect } from "react"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+
 import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
+
+import type React from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Heart, TrendingUp, Target, Clock, Utensils, Activity, CheckCircle } from "lucide-react"
-import { LanguageSwitcher } from "@/components/language-switcher"
+import { ArrowLeft, Heart, TrendingUp, Target, Clock, Utensils, Activity } from "lucide-react"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useLanguage } from "@/lib/language-context"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { Toaster } from "@/components/ui/toaster"
+import Database from "lucide-react"
 
 interface BMIResult {
   bmi: number
@@ -33,8 +40,11 @@ interface PersonalizedTip {
 }
 
 export default function ResultsPage() {
+  const searchParams = useSearchParams()
+  const bmi = searchParams.get("bmi")
+  const category = searchParams.get("category")
   const router = useRouter()
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
   const [result, setResult] = useState<BMIResult | null>(null)
   const [completedTips, setCompletedTips] = useState<Set<string>>(new Set())
 
@@ -325,266 +335,76 @@ export default function ResultsPage() {
     }
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "diet":
-        return "text-orange-600 dark:text-orange-400"
-      case "exercise":
-        return "text-blue-600 dark:text-blue-400"
-      case "lifestyle":
-        return "text-purple-600 dark:text-purple-400"
-      case "medical":
-        return "text-red-600 dark:text-red-400"
+  const getCategoryColor = (cat: string | null) => {
+    switch (cat?.toLowerCase()) {
+      case "underweight":
+        return "text-blue-500"
+      case "normal weight":
+        return "text-green-500"
+      case "overweight":
+        return "text-yellow-500"
+      case "obese":
+        return "text-red-500"
       default:
-        return "text-gray-600 dark:text-gray-400"
+        return "text-gray-500"
+    }
+  }
+
+  const getCategoryDescription = (cat: string | null) => {
+    switch (cat?.toLowerCase()) {
+      case "underweight":
+        return t("underweight_desc")
+      case "normal weight":
+        return t("normal_weight_desc")
+      case "overweight":
+        return t("overweight_desc")
+      case "obese":
+        return t("obese_desc")
+      default:
+        return t("unknown_category_desc")
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-4">
-      {/* Background blur elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      {/* Language Switcher */}
-      <div className="fixed top-4 right-4 z-50">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4 dark:from-gray-900 dark:to-black">
+      <div className="absolute top-4 right-4">
         <LanguageSwitcher />
       </div>
-
-      <div className="relative z-10 max-w-md mx-auto pt-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => router.push("/")}
-              className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/30 dark:hover:bg-white/20"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white ml-4">{t("yourResult")}</h1>
+      <Card className="w-full max-w-md p-6 shadow-lg rounded-lg text-center">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">{t("your_bmi_result")}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <p className="text-gray-600 dark:text-gray-400 text-lg">{t("your_bmi_is")}</p>
+            <p className="text-6xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
+              {bmi ? Number.parseFloat(bmi).toFixed(2) : "N/A"}
+            </p>
           </div>
-        </div>
-
-        {/* BMI Score Card */}
-        <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mb-6">
-          <CardContent className="p-6 text-center">
-            <div
-              className={`inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br ${getBMIBgColor(result.category)} backdrop-blur-xl rounded-full mb-4 border border-white/20`}
-            >
-              <span className="text-3xl font-bold text-gray-900 dark:text-white">{result.bmi.toFixed(1)}</span>
-            </div>
-            <h2 className={`text-2xl font-bold mb-2 ${getBMIColor(result.category)}`}>
-              {t(result.category.toLowerCase())}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">{t("bodyMassIndex")}</p>
-          </CardContent>
-        </Card>
-
-        {/* BMI Range Indicator */}
-        <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mb-6">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t("bmiRange")}</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                <span>{t("underweight")}</span>
-                <span>{t("normal")}</span>
-                <span>{t("overweight")}</span>
-                <span>{t("obese")}</span>
-              </div>
-              <div className="relative h-3 bg-gradient-to-r from-blue-400 via-green-400 via-yellow-400 to-red-400 rounded-full overflow-hidden">
-                <div
-                  className="absolute top-0 w-3 h-3 bg-white border-2 border-gray-800 dark:border-white rounded-full transform -translate-x-1/2 transition-all duration-1000 ease-out shadow-lg"
-                  style={{ left: `${getBMIPosition(result.bmi)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                <span>{"<18.5"}</span>
-                <span>18.5-24.9</span>
-                <span>25-29.9</span>
-                <span>{"≥30"}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Health Tip Card */}
-        <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <Heart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t("healthInsight")}</h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                  {t(`healthTips.${result.category.toLowerCase()}`)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Refined Personalized Tips Section */}
-        <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                {t("personalizedTips")}
-              </h3>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {completedTips.size}/{personalizedTips.length} {t("completed")}
-              </div>
-            </div>
-
-            {/* Tips List */}
-            <div className="space-y-4">
-              {personalizedTips.map((tip, index) => (
-                <div
-                  key={tip.id}
-                  className={`p-4 rounded-xl border transition-all duration-300 ${
-                    completedTips.has(tip.id)
-                      ? "bg-green-50/50 border-green-200/50 dark:bg-green-900/20 dark:border-green-700/50"
-                      : "bg-white/30 dark:bg-white/10 border-white/20 hover:bg-white/40 dark:hover:bg-white/15"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 mt-1">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          completedTips.has(tip.id)
-                            ? "bg-green-500 text-white"
-                            : "bg-blue-500/20 text-blue-600 dark:text-blue-400"
-                        }`}
-                      >
-                        {completedTips.has(tip.id) ? <CheckCircle className="w-5 h-5" /> : tip.icon}
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <h4
-                          className={`font-semibold text-sm leading-tight ${
-                            completedTips.has(tip.id)
-                              ? "text-green-800 dark:text-green-200 line-through"
-                              : "text-gray-900 dark:text-white"
-                          }`}
-                        >
-                          {tip.title}
-                        </h4>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(tip.priority)}`}
-                          >
-                            {t(tip.priority)}
-                          </span>
-                        </div>
-                      </div>
-                      <p
-                        className={`text-sm leading-relaxed mb-4 ${
-                          completedTips.has(tip.id)
-                            ? "text-green-700 dark:text-green-300"
-                            : "text-gray-600 dark:text-gray-300"
-                        }`}
-                      >
-                        {tip.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div
-                          className={`flex items-center gap-1 text-xs font-medium ${getCategoryColor(tip.category)}`}
-                        >
-                          <span className="capitalize">{t(tip.category)}</span>
-                        </div>
-                        {tip.actionable && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant={completedTips.has(tip.id) ? "outline" : "default"}
-                              onClick={() => toggleTipCompletion(tip.id)}
-                              className="text-xs h-8 px-3"
-                            >
-                              {completedTips.has(tip.id) ? t("markIncomplete") : t("markComplete")}
-                            </Button>
-                            {tip.category === "medical" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs h-8 px-3 bg-transparent"
-                                onClick={() =>
-                                  window.open(
-                                    "https://www.google.com/search?q=healthcare+professionals+near+me",
-                                    "_blank",
-                                  )
-                                }
-                              >
-                                {t("findProfessional")}
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Progress Summary */}
-            <div className="mt-6 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">{t("progressSummary")}</span>
-                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                  {Math.round((completedTips.size / personalizedTips.length) * 100)}%
-                </span>
-              </div>
-              <div className="w-full bg-blue-200/50 dark:bg-blue-800/50 rounded-full h-2">
-                <div
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${(completedTips.size / personalizedTips.length) * 100}%` }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Summary Stats */}
-        <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl mt-6">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t("yourDetails")}</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">{t("gender")}</span>
-                <p className="font-medium text-gray-900 dark:text-white capitalize">
-                  {result.gender === "male" ? t("male") : t("female")}
-                </p>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">{t("height")}</span>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  {result.height} {t("cm")}
-                </p>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">{t("weight")}</span>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  {result.weight} {t("kg")}
-                </p>
-              </div>
-              {result.age && (
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">{t("age")}</span>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {result.age} {t("years")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <div>
+            <p className="text-gray-600 dark:text-gray-400 text-lg">{t("which_is")}</p>
+            <p className={`text-4xl font-bold ${getCategoryColor(category)} mt-2`}>
+              {category ? t(category.toLowerCase().replace(/\s/g, "_")) : "N/A"}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 mt-4">{getCategoryDescription(category)}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+            <Link href="/" passHref>
+              <Button variant="outline" className="w-full sm:w-auto py-2 text-lg bg-transparent">
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                {t("recalculate_bmi")}
+              </Button>
+            </Link>
+            <Link href="/database" passHref>
+              <Button className="w-full sm:w-auto py-2 text-lg">
+                <Database className="w-5 h-5 mr-2" />
+                {t("view_database")}
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+      <Toaster />
     </div>
   )
 }
