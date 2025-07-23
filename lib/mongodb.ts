@@ -1,48 +1,68 @@
-import { MongoClient } from "mongodb"
+import { MongoClient, type Db } from "mongodb"
+
+// -----------------------------------------------------------------------------
+//  MongoDB connection utility
+//  ‣ Uses a singleton pattern in development to avoid creating multiple clients
+//  ‣ Exposes helper functions connectToDatabase() & checkDatabaseHealth()
+// -----------------------------------------------------------------------------
 
 const uri = process.env.MONGODB_URI
-const dbName = process.env.DB_NAME
+const dbName = process.env.DB_NAME || "bmi_calculator"
 
 if (!uri) {
-  throw new Error("Please define the MONGODB_URI environment variable inside .env.local")
-}
-
-if (!dbName) {
-  throw new Error("Please define the DB_NAME environment variable inside .env.local")
+  throw new Error("Missing `MONGODB_URI`.\nAdd it to your environment variables (.env.local).")
 }
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
 
 if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the client is not recreated on every hot reload
-  if (!(global as any)._mongoClientPromise) {
-    client = new MongoClient(uri)
-    ;(global as any)._mongoClientPromise = client.connect()
+  // Re-use the same client in development (Next.js hot-reload friendly)
+  const globalWithMongo = global as typeof globalThis & {
+    _mongoClientPromise?: Promise<MongoClient>
   }
-  clientPromise = (global as any)._mongoClientPromise
+
+  if (!globalWithMongo._mongoClientPromise) {
+    client = new MongoClient(uri)
+    globalWithMongo._mongoClientPromise = client.connect()
+  }
+
+  clientPromise = globalWithMongo._mongoClientPromise
 } else {
-  // In production mode, it's best to not use a global variable
-  client = new MongoClient(uri)
+  // Always create a new client in production
+  client = new MongoClient(uri, {
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 10000,
+  })
   clientPromise = client.connect()
 }
 
-export async function connectToDatabase() {
+/**
+ * Establish (or re-use) a connection and return the client & db handles.
+ */
+export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
   const client = await clientPromise
   const db = client.db(dbName)
+
   return { client, db }
 }
 
-export async function checkDatabaseHealth() {
+/**
+ * Ping the database once to make sure the connection is healthy.
+ * Returns `true` if successful, otherwise logs the error and returns `false`.
+ */
+export async function checkDatabaseHealth(): Promise<boolean> {
   try {
     const { db } = await connectToDatabase()
-    // Attempt a simple operation to check connectivity
     await db.command({ ping: 1 })
-    return { isConnected: true, message: "Successfully connected to MongoDB." }
+    return true
   } catch (error) {
-    console.error("Database health check failed:", error)
-    return { isConnected: false, message: "Failed to connect to MongoDB." }
+    console.error("MongoDB health check failed:", error)
+    return false
   }
 }
 
+// Default export kept for any legacy imports
 export default clientPromise
