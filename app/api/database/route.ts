@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Gender filter - ensure exact match and handle case sensitivity
+    // Store gender as lowercase to ensure consistent filtering
     if (gender.trim() && (gender.toLowerCase() === "male" || gender.toLowerCase() === "female")) {
       filter.gender = gender.toLowerCase()
     }
@@ -97,10 +98,11 @@ export async function GET(request: NextRequest) {
     const formattedData = data.map((user) => ({
       id: user._id.toString(),
       name: user.name || "Anonymous",
-      gender: user.gender || "unknown",
-      age: user.age || "N/A",
-      height: user.height || 0,
-      weight: user.weight || 0,
+      // Ensure gender is consistently lowercase for internal logic, but can be capitalized for display
+      gender: user.gender ? user.gender.toLowerCase() : "unknown",
+      age: user.age || "N/A", // Use "N/A" for missing age
+      height: user.height || 0, // Use 0 for missing height
+      weight: user.weight || 0, // Use 0 for missing weight
       currentBmi: user.currentBmi ? Number.parseFloat(user.currentBmi.toFixed(2)) : null,
       currentCategory: user.currentCategory || "Unknown",
       lastCalculation: user.lastCalculation || new Date().toISOString(),
