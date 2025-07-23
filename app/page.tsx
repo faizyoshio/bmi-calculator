@@ -3,106 +3,72 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Calculator, User, Ruler, Weight, Calendar, UserCheck } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
-import { LoadingDots } from "@/components/ui/loading-dots"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { LoadingDots } from "@/components/loading-dots"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useLanguage } from "@/lib/language-context"
+import { Calculator, Database, Heart, TrendingUp, Users, Activity } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
+import Link from "next/link"
 
-export default function BMICalculator() {
-  const router = useRouter()
+interface BMIResult {
+  bmi: number
+  category: string
+  userId?: number
+  calculatedAt: string
+}
+
+export default function HomePage() {
   const { t } = useLanguage()
   const [formData, setFormData] = useState({
     name: "",
-    gender: "male",
+    gender: "",
+    age: "",
     height: "",
     weight: "",
-    age: "",
   })
-  const [isLoading, setIsLoading] = useState(false)
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
-  const [isValidating, setIsValidating] = useState(false)
-
-  const validateField = async (field: string, value: string) => {
-    setIsValidating(true)
-
-    // Simulate validation delay for better UX
-    await new Promise((resolve) => setTimeout(resolve, 300))
-
-    const errors: { [key: string]: string } = {}
-
-    switch (field) {
-      case "name":
-        if (value && (value.length < 2 || value.length > 50)) {
-          errors.name = t("nameRange")
-        } else if (value && !/^[a-zA-Z\s]+$/.test(value)) {
-          errors.name = t("nameFormat")
-        }
-        break
-      case "height":
-        const height = Number.parseFloat(value)
-        if (value && (height < 50 || height > 300)) {
-          errors.height = t("heightRange")
-        }
-        break
-      case "weight":
-        const weight = Number.parseFloat(value)
-        if (value && (weight < 20 || weight > 500)) {
-          errors.weight = t("weightRange")
-        }
-        break
-      case "age":
-        const age = Number.parseFloat(value)
-        if (value && (age < 1 || age > 120)) {
-          errors.age = t("ageRange")
-        }
-        break
-    }
-
-    setFieldErrors((prev) => ({ ...prev, [field]: errors[field] || "" }))
-    setIsValidating(false)
-  }
+  const [result, setResult] = useState<BMIResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    if (value || field === "name") {
-      validateField(field, value)
-    } else {
-      setFieldErrors((prev) => ({ ...prev, [field]: "" }))
+    setError(null)
+  }
+
+  const validateForm = () => {
+    if (!formData.name.trim()) return "Name is required"
+    if (!formData.gender) return "Gender is required"
+    if (!formData.age || Number.parseInt(formData.age) <= 0 || Number.parseInt(formData.age) > 150) {
+      return "Age must be between 1 and 150"
     }
+    if (!formData.height || Number.parseFloat(formData.height) <= 0 || Number.parseFloat(formData.height) > 300) {
+      return "Height must be between 1 and 300 cm"
+    }
+    if (!formData.weight || Number.parseFloat(formData.weight) <= 0 || Number.parseFloat(formData.weight) > 1000) {
+      return "Weight must be between 1 and 1000 kg"
+    }
+    return null
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.height || !formData.weight) {
-      toast({
-        title: t("missingInfo"),
-        description: t("missingInfoDesc"),
-        variant: "destructive",
-      })
+    const validationError = validateForm()
+    if (validationError) {
+      setError(validationError)
       return
     }
 
-    const height = Number.parseFloat(formData.height)
-    const weight = Number.parseFloat(formData.weight)
-
-    if (height <= 0 || weight <= 0) {
-      toast({
-        title: t("invalidInput"),
-        description: t("invalidInputDesc"),
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
+    setLoading(true)
+    setError(null)
 
     try {
       const response = await fetch("/api/bmi", {
@@ -110,245 +76,359 @@ export default function BMICalculator() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          gender: formData.gender,
+          age: Number.parseInt(formData.age),
+          height: Number.parseFloat(formData.height),
+          weight: Number.parseFloat(formData.weight),
+        }),
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
-      if (response.ok) {
-        // Store result in sessionStorage for the results page
-        sessionStorage.setItem("bmiResult", JSON.stringify(result))
-
-        // Show success message if name was provided
-        if (formData.name) {
-          toast({
-            title: t("welcomeMessage"),
-            description: t("dataStoredMessage").replace("{name}", formData.name),
-            variant: "default",
-          })
-        }
-
-        router.push("/results")
-      } else {
-        throw new Error(result.error || "Failed to calculate BMI")
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to calculate BMI")
       }
-    } catch (error) {
+
+      if (data.success) {
+        setResult({
+          bmi: data.data.bmi,
+          category: data.data.category,
+          userId: data.data.userId,
+          calculatedAt: data.data.calculatedAt,
+        })
+
+        toast({
+          title: "BMI Calculated Successfully",
+          description: `Your BMI is ${data.data.bmi} (${data.data.category})`,
+        })
+      } else {
+        throw new Error(data.error || "Calculation failed")
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred"
+      setError(errorMessage)
       toast({
-        title: t("calculationError"),
-        description: t("calculationErrorDesc"),
+        title: "Calculation Failed",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setLoading(false)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      gender: "",
+      age: "",
+      height: "",
+      weight: "",
+    })
+    setResult(null)
+    setError(null)
+  }
+
+  const getBMIColor = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "underweight":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+      case "normal weight":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+      case "overweight":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+      case "obese":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-4">
-      {/* Background blur elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      {/* Language Switcher */}
-      <div className="fixed top-4 right-4 z-50 no-print">
-        <LanguageSwitcher />
-      </div>
-
-      <div className="relative z-10 max-w-md mx-auto pt-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-2xl mb-4 border border-white/20">
-            <Calculator className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Calculator className="w-8 h-8 text-primary" />
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">MySQL BMI Calculator</h1>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("title")}</h1>
-          <p className="text-gray-600 dark:text-gray-300">{t("subtitle")}</p>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Professional BMI calculator with MySQL database integration, advanced analytics, and comprehensive data
+            management
+          </p>
+          <div className="flex justify-center mt-4">
+            <LanguageSwitcher />
+          </div>
         </div>
 
-        {/* Main Form Card */}
-        <Card className="bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Name Input */}
-              <div className="space-y-3">
-                <Label
-                  htmlFor="name"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                >
-                  <UserCheck className="w-4 h-4" />
-                  {t("name")}
-                  <span className="text-xs text-gray-500 dark:text-gray-400">({t("optional")})</span>
-                  {isValidating && <LoadingDots size="sm" />}
-                </Label>
-                <div className="relative">
+        {/* Navigation Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Link href="/database">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-4 text-center">
+                <Database className="w-6 h-6 mx-auto mb-2 text-blue-500" />
+                <h3 className="font-semibold">Database</h3>
+                <p className="text-sm text-muted-foreground">View all records</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/api/health">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-4 text-center">
+                <Heart className="w-6 h-6 mx-auto mb-2 text-green-500" />
+                <h3 className="font-semibold">Health Check</h3>
+                <p className="text-sm text-muted-foreground">System status</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/api/stats">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-4 text-center">
+                <TrendingUp className="w-6 h-6 mx-auto mb-2 text-purple-500" />
+                <h3 className="font-semibold">Statistics</h3>
+                <p className="text-sm text-muted-foreground">Analytics data</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Card className="bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900">
+            <CardContent className="p-4 text-center">
+              <Users className="w-6 h-6 mx-auto mb-2 text-orange-500" />
+              <h3 className="font-semibold">MySQL Guide</h3>
+              <p className="text-sm text-muted-foreground">Integration docs</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* BMI Calculator Form */}
+          <Card className="shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="w-5 h-5" />
+                BMI Calculator
+              </CardTitle>
+              <CardDescription>
+                Enter your details to calculate your Body Mass Index and save to MySQL database
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
                     type="text"
-                    placeholder={t("namePlaceholder")}
+                    placeholder="Enter your full name"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
-                    className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
-                      fieldErrors.name ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""
-                    }`}
-                    maxLength={50}
+                    required
                   />
-                  {fieldErrors.name && (
-                    <p className="text-red-400 text-xs mt-1 animate-fade-in-up">{fieldErrors.name}</p>
-                  )}
-                  {formData.name && !fieldErrors.name && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <UserCheck className="w-4 h-4 text-green-500" />
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Gender Toggle */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  {t("gender")}
-                </Label>
-                <div className="flex items-center justify-between p-4 bg-white/30 dark:bg-white/10 rounded-xl border border-white/20">
-                  <span
-                    className={`text-sm font-medium transition-colors ${formData.gender === "female" ? "text-pink-600 dark:text-pink-400" : "text-gray-500"}`}
-                  >
-                    {t("female")}
-                  </span>
-                  <Switch
-                    checked={formData.gender === "male"}
-                    onCheckedChange={(checked) =>
-                      setFormData((prev) => ({ ...prev, gender: checked ? "male" : "female" }))
-                    }
-                    className="data-[state=checked]:bg-blue-600"
-                  />
-                  <span
-                    className={`text-sm font-medium transition-colors ${formData.gender === "male" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"}`}
-                  >
-                    {t("male")}
-                  </span>
+                <div>
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
 
-              {/* Height Input with validation */}
-              <div className="space-y-3">
-                <Label
-                  htmlFor="height"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                >
-                  <Ruler className="w-4 h-4" />
-                  {t("height")}
-                  {isValidating && <LoadingDots size="sm" />}
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="height"
-                    type="number"
-                    placeholder={t("heightPlaceholder")}
-                    value={formData.height}
-                    onChange={(e) => handleInputChange("height", e.target.value)}
-                    className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
-                      fieldErrors.height ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""
-                    }`}
-                    min="1"
-                    max="300"
-                  />
-                  {fieldErrors.height && (
-                    <p className="text-red-400 text-xs mt-1 animate-fade-in-up">{fieldErrors.height}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Weight Input */}
-              <div className="space-y-3">
-                <Label
-                  htmlFor="weight"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                >
-                  <Weight className="w-4 h-4" />
-                  {t("weight")}
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="weight"
-                    type="number"
-                    placeholder={t("weightPlaceholder")}
-                    value={formData.weight}
-                    onChange={(e) => handleInputChange("weight", e.target.value)}
-                    className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
-                      fieldErrors.weight ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""
-                    }`}
-                    min="1"
-                    max="500"
-                  />
-                  {fieldErrors.weight && (
-                    <p className="text-red-400 text-xs mt-1 animate-fade-in-up">{fieldErrors.weight}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Age Input (Optional) */}
-              <div className="space-y-3">
-                <Label
-                  htmlFor="age"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  {t("age")}
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="age"
-                    type="number"
-                    placeholder={t("agePlaceholder")}
-                    value={formData.age}
-                    onChange={(e) => handleInputChange("age", e.target.value)}
-                    className={`bg-white/30 dark:bg-white/10 border-white/20 backdrop-blur-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-300 ${
-                      fieldErrors.age ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""
-                    }`}
-                    min="1"
-                    max="120"
-                  />
-                  {fieldErrors.age && <p className="text-red-400 text-xs mt-1 animate-fade-in-up">{fieldErrors.age}</p>}
-                </div>
-              </div>
-
-              {/* Calculate Button */}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="relative">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <div className="absolute inset-0 w-4 h-4 border-2 border-transparent border-t-white/50 rounded-full animate-spin animate-reverse"></div>
-                    </div>
-                    <span className="animate-pulse">{t("calculating")}</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="age">Age (years)</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      placeholder="25"
+                      min="1"
+                      max="150"
+                      value={formData.age}
+                      onChange={(e) => handleInputChange("age", e.target.value)}
+                      required
+                    />
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Calculator className="w-4 h-4" />
-                    {t("calculateButton")}
+                  <div>
+                    <Label htmlFor="height">Height (cm)</Label>
+                    <Input
+                      id="height"
+                      type="number"
+                      placeholder="170"
+                      min="1"
+                      max="300"
+                      step="0.1"
+                      value={formData.height}
+                      onChange={(e) => handleInputChange("height", e.target.value)}
+                      required
+                    />
                   </div>
+                  <div>
+                    <Label htmlFor="weight">Weight (kg)</Label>
+                    <Input
+                      id="weight"
+                      type="number"
+                      placeholder="70"
+                      min="1"
+                      max="1000"
+                      step="0.1"
+                      value={formData.weight}
+                      onChange={(e) => handleInputChange("weight", e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-          <p>{t("disclaimer")}</p>
-          <p className="mt-1">{t("consultAdvice")}</p>
-          {formData.name && (
-            <p className="mt-2 text-blue-600 dark:text-blue-400 font-medium">
-              {t("personalizedFor")} {formData.name}
-            </p>
-          )}
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={loading} className="flex-1">
+                    {loading ? (
+                      <>
+                        <LoadingDots />
+                        <span className="ml-2">Calculating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Calculator className="w-4 h-4 mr-2" />
+                        Calculate BMI
+                      </>
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Reset
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Results Display */}
+          <div className="space-y-6">
+            {result && (
+              <Card className="shadow-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Your BMI Result
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary mb-2">{result.bmi.toFixed(2)}</div>
+                    <Badge className={getBMIColor(result.category)} variant="secondary">
+                      {result.category}
+                    </Badge>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Name:</span>
+                      <span className="font-medium">{formData.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Gender:</span>
+                      <span className="font-medium capitalize">{formData.gender}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Age:</span>
+                      <span className="font-medium">{formData.age} years</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Height:</span>
+                      <span className="font-medium">{formData.height} cm</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Weight:</span>
+                      <span className="font-medium">{formData.weight} kg</span>
+                    </div>
+                    {result.userId && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">User ID:</span>
+                        <span className="font-medium">#{result.userId}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Calculated:</span>
+                      <span className="font-medium">{new Date(result.calculatedAt).toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="text-sm text-muted-foreground">
+                    <p className="mb-2">
+                      <strong>BMI Categories:</strong>
+                    </p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>Underweight:</span>
+                        <span>Below 18.5</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Normal weight:</span>
+                        <span>18.5 - 24.9</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Overweight:</span>
+                        <span>25.0 - 29.9</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Obese:</span>
+                        <span>30.0 and above</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">About This Application</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <Database className="w-4 h-4 mt-0.5 text-blue-500" />
+                  <div>
+                    <strong>MySQL Integration:</strong> All calculations are stored in a MySQL database with proper
+                    indexing and optimization.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Heart className="w-4 h-4 mt-0.5 text-green-500" />
+                  <div>
+                    <strong>Health Monitoring:</strong> Real-time database health checks and performance monitoring.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <TrendingUp className="w-4 h-4 mt-0.5 text-purple-500" />
+                  <div>
+                    <strong>Analytics:</strong> Comprehensive statistics and data visualization capabilities.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Users className="w-4 h-4 mt-0.5 text-orange-500" />
+                  <div>
+                    <strong>Data Management:</strong> Advanced filtering, sorting, pagination, and export features.
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
