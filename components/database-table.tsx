@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import type { User, DatabaseTableResponse, TableFilters } from "@/types/database-table"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface DatabaseTableProps {
   title?: string
@@ -224,6 +225,21 @@ export function DatabaseTable({
     return sortOrder === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
   }
 
+  const getHealthTip = (category: string) => {
+    switch (category?.toLowerCase()) {
+      case "underweight":
+        return "Consider consulting a nutritionist to develop a healthy weight gain plan. Focus on nutrient-dense foods and regular exercise to build muscle mass."
+      case "normal":
+        return "Great job! Maintain your healthy weight through balanced nutrition and regular physical activity. Keep up the good work!"
+      case "overweight":
+        return "Consider adopting a balanced diet and increasing physical activity. Small lifestyle changes can make a big difference in your health."
+      case "obese":
+        return "We recommend consulting with a healthcare professional to develop a comprehensive weight management plan. Focus on gradual, sustainable changes."
+      default:
+        return "No specific health tip available for this category."
+    }
+  }
+
   if (error) {
     return (
       <Card>
@@ -416,136 +432,155 @@ export function DatabaseTable({
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("name")}
-                    >
-                      Name {getSortIcon("name")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("gender")}
-                    >
-                      Gender {getSortIcon("gender")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("age")}
-                    >
-                      Age {getSortIcon("age")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("height")}
-                    >
-                      Height (cm) {getSortIcon("height")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("weight")}
-                    >
-                      Weight (kg) {getSortIcon("weight")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("currentBmi")}
-                    >
-                      BMI {getSortIcon("currentBmi")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("currentCategory")}
-                    >
-                      Category {getSortIcon("currentCategory")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => handleSort("lastCalculation")}
-                    >
-                      Last Calculation {getSortIcon("lastCalculation")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>Total Calculations</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: pagination.limit }).map((_, index) => (
-                    <TableRow key={index}>
-                      {Array.from({ length: 9 }).map((_, cellIndex) => (
-                        <TableCell key={cellIndex}>
-                          <Skeleton className="h-4 w-full" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : data.length === 0 ? (
+            <TooltipProvider>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
-                      <div className="flex flex-col items-center gap-2">
-                        <Database className="w-8 h-8 text-muted-foreground" />
-                        <p className="text-muted-foreground">No database records found</p>
-                        <Button variant="outline" size="sm" onClick={clearFilters}>
-                          Clear Filters
-                        </Button>
-                      </div>
-                    </TableCell>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("name")}
+                      >
+                        Name {getSortIcon("name")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("gender")}
+                      >
+                        Gender {getSortIcon("gender")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("age")}
+                      >
+                        Age {getSortIcon("age")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("height")}
+                      >
+                        Height (cm) {getSortIcon("height")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("weight")}
+                      >
+                        Weight (kg) {getSortIcon("weight")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("currentBmi")}
+                      >
+                        BMI {getSortIcon("currentBmi")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("currentCategory")}
+                      >
+                        Category {getSortIcon("currentCategory")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-semibold"
+                        onClick={() => handleSort("lastCalculation")}
+                      >
+                        Last Calculation {getSortIcon("lastCalculation")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Total Calculations</TableHead>
                   </TableRow>
-                ) : (
-                  data.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell className="capitalize">{user.gender}</TableCell>
-                      <TableCell>{user.age}</TableCell>
-                      <TableCell>{user.height}</TableCell>
-                      <TableCell>{user.weight}</TableCell>
-                      <TableCell>{user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}</TableCell>
-                      <TableCell>
-                        <Badge className={getBmiCategoryColor(user.currentCategory)}>{user.currentCategory}</Badge>
-                      </TableCell>
-                      <TableCell>{new Date(user.lastCalculation).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{user.calculationCount}</Badge>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    Array.from({ length: pagination.limit }).map((_, index) => (
+                      <TableRow key={index}>
+                        {Array.from({ length: 9 }).map((_, cellIndex) => (
+                          <TableCell key={cellIndex}>
+                            <Skeleton className="h-4 w-full" />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : data.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8">
+                        <div className="flex flex-col items-center gap-2">
+                          <Database className="w-8 h-8 text-muted-foreground" />
+                          <p className="text-muted-foreground">No database records found</p>
+                          <Button variant="outline" size="sm" onClick={clearFilters}>
+                            Clear Filters
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    data.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell className="capitalize">
+                          {user.gender === "unknown" ? "Unknown" : user.gender}
+                        </TableCell>
+                        <TableCell>{user.age === "N/A" ? "N/A" : user.age}</TableCell>
+                        <TableCell>{user.height === 0 ? "N/A" : user.height}</TableCell>
+                        <TableCell>{user.weight === 0 ? "N/A" : user.weight}</TableCell>
+                        <TableCell>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">
+                                  {user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}
+                                </span>
+                                <Badge className={getBmiCategoryColor(user.currentCategory)}>
+                                  {user.currentCategory}
+                                </Badge>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>BMI: {user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}</p>
+                              <p>Category: {user.currentCategory}</p>
+                              <p>Health Tip: {getHealthTip(user.currentCategory)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>{new Date(user.lastCalculation).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{user.calculationCount}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           </div>
 
           {/* Pagination */}
