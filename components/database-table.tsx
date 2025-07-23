@@ -229,7 +229,7 @@ export function DatabaseTable({
     switch (category?.toLowerCase()) {
       case "underweight":
         return "Consider consulting a nutritionist to develop a healthy weight gain plan. Focus on nutrient-dense foods and regular exercise to build muscle mass."
-      case "normal weight": // Changed from "normal" to "normal weight" for consistency
+      case "normal weight":
         return "Great job! Maintain your healthy weight through balanced nutrition and regular physical activity. Keep up the good work!"
       case "overweight":
         return "Consider adopting a balanced diet and increasing physical activity. Small lifestyle changes can make a big difference in your health."
