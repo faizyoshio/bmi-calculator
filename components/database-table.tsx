@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   ChevronLeft,
   ChevronRight,
@@ -25,7 +26,11 @@ import {
   AlertCircle,
   FileText,
   FileSpreadsheet,
-  Info,
+  Trash2,
+  Eye,
+  Calendar,
+  Users,
+  TrendingUp,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import type { User, DatabaseTableResponse, TableFilters } from "@/types/database-table"
@@ -33,15 +38,21 @@ import type { User, DatabaseTableResponse, TableFilters } from "@/types/database
 interface DatabaseTableProps {
   title?: string
   description?: string
+  showAdvancedFeatures?: boolean
 }
 
 export function DatabaseTable({
-  title = "BMI Calculator Database",
-  description = "View and manage BMI calculation records stored in the database",
+  title = "MySQL Database Management",
+  description = "Comprehensive database viewer with advanced filtering, sorting, and export capabilities",
+  showAdvancedFeatures = true,
 }: DatabaseTableProps) {
+  // State management
   const [data, setData] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
+
+  // Pagination state
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -50,21 +61,30 @@ export function DatabaseTable({
     hasNextPage: false,
     hasPrevPage: false,
   })
+
+  // Sorting state
   const [sortBy, setSortBy] = useState("lastCalculation")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+
+  // Filter state
   const [filters, setFilters] = useState<TableFilters>({
     search: "",
     category: "",
     gender: "",
   })
+
+  // UI state
   const [filterOptions, setFilterOptions] = useState({
     categories: [],
     genders: [],
   })
   const [showFilters, setShowFilters] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<any>(null)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
+  /**
+   * Main data fetching function with comprehensive error handling
+   */
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -83,23 +103,34 @@ export function DatabaseTable({
       const response = await fetch(`/api/database?${params}`)
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.details || `HTTP ${response.status}: ${response.statusText}`)
       }
 
       const result: DatabaseTableResponse = await response.json()
 
-      console.log("API Response:", result)
+      if (!result.success) {
+        throw new Error(result.error || "API returned unsuccessful response")
+      }
 
-      setData(result.data)
+      // Update state with fetched data
+      setData(result.data || [])
       setPagination(result.pagination)
-      setFilterOptions(result.filters)
-      setDebugInfo(result.debug)
+      setFilterOptions(result.filters || { categories: [], genders: [] })
 
-      // Log filter options for debugging
-      console.log("Filter options received:", result.filters)
+      // Clear selections when data changes
+      setSelectedRows(new Set())
+
+      console.log("Data fetched successfully:", {
+        recordCount: result.data?.length || 0,
+        totalCount: result.pagination?.totalCount || 0,
+        filters: result.filters,
+      })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch database content"
+      console.error("Data fetch error:", err)
       setError(errorMessage)
+
       toast({
         title: "Database Error",
         description: errorMessage,
@@ -110,10 +141,14 @@ export function DatabaseTable({
     }
   }, [pagination.currentPage, pagination.limit, sortBy, sortOrder, filters])
 
+  // Fetch data on component mount and when dependencies change
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
+  /**
+   * Handle column sorting with toggle functionality
+   */
   const handleSort = (field: string) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc")
@@ -124,24 +159,41 @@ export function DatabaseTable({
     setPagination((prev) => ({ ...prev, currentPage: 1 }))
   }
 
+  /**
+   * Handle pagination changes
+   */
   const handlePageChange = (newPage: number) => {
-    setPagination((prev) => ({ ...prev, currentPage: newPage }))
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination((prev) => ({ ...prev, currentPage: newPage }))
+    }
   }
 
+  /**
+   * Handle page size changes
+   */
   const handleLimitChange = (newLimit: string) => {
-    setPagination((prev) => ({
-      ...prev,
-      limit: Number.parseInt(newLimit),
-      currentPage: 1,
-    }))
+    const limit = Number.parseInt(newLimit)
+    if (limit > 0 && limit <= 100) {
+      setPagination((prev) => ({
+        ...prev,
+        limit,
+        currentPage: 1,
+      }))
+    }
   }
 
+  /**
+   * Handle filter changes with debouncing for search
+   */
   const handleFilterChange = (key: keyof TableFilters, value: string) => {
     console.log(`Filter change: ${key} = ${value}`)
     setFilters((prev) => ({ ...prev, [key]: value }))
     setPagination((prev) => ({ ...prev, currentPage: 1 }))
   }
 
+  /**
+   * Clear all filters
+   */
   const clearFilters = () => {
     console.log("Clearing all filters")
     setFilters({
@@ -152,6 +204,9 @@ export function DatabaseTable({
     setPagination((prev) => ({ ...prev, currentPage: 1 }))
   }
 
+  /**
+   * Handle data export in multiple formats
+   */
   const handleExport = async (format: "json" | "csv") => {
     setExporting(true)
     try {
@@ -163,7 +218,7 @@ export function DatabaseTable({
       const response = await fetch(`/api/database/export?${params}`)
 
       if (!response.ok) {
-        throw new Error("Database export failed")
+        throw new Error("Export request failed")
       }
 
       if (format === "csv") {
@@ -191,9 +246,10 @@ export function DatabaseTable({
 
       toast({
         title: "Export Successful",
-        description: `Database content exported as ${format.toUpperCase()}`,
+        description: `Database exported as ${format.toUpperCase()} file`,
       })
     } catch (err) {
+      console.error("Export error:", err)
       toast({
         title: "Export Failed",
         description: "Failed to export database content",
@@ -204,6 +260,83 @@ export function DatabaseTable({
     }
   }
 
+  /**
+   * Handle bulk delete operations
+   */
+  const handleBulkDelete = async () => {
+    if (selectedRows.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select rows to delete",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setBulkDeleting(true)
+    try {
+      const response = await fetch("/api/database", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "bulk_delete",
+          data: { ids: Array.from(selectedRows) },
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Bulk delete failed")
+      }
+
+      const result = await response.json()
+
+      toast({
+        title: "Delete Successful",
+        description: result.message || `Deleted ${selectedRows.size} records`,
+      })
+
+      // Refresh data and clear selections
+      setSelectedRows(new Set())
+      await fetchData()
+    } catch (err) {
+      console.error("Bulk delete error:", err)
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete selected records",
+        variant: "destructive",
+      })
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
+
+  /**
+   * Handle row selection
+   */
+  const handleRowSelect = (userId: string, checked: boolean) => {
+    const newSelection = new Set(selectedRows)
+    if (checked) {
+      newSelection.add(userId)
+    } else {
+      newSelection.delete(userId)
+    }
+    setSelectedRows(newSelection)
+  }
+
+  /**
+   * Handle select all rows
+   */
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRows(new Set(data.map((user) => user.id)))
+    } else {
+      setSelectedRows(new Set())
+    }
+  }
+
+  /**
+   * Get BMI category styling
+   */
   const getBmiCategoryColor = (category: string) => {
     switch (category?.toLowerCase()) {
       case "underweight":
@@ -219,11 +352,32 @@ export function DatabaseTable({
     }
   }
 
+  /**
+   * Get sort icon based on current sort state
+   */
   const getSortIcon = (field: string) => {
     if (sortBy !== field) return <ArrowUpDown className="w-4 h-4" />
     return sortOrder === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
   }
 
+  /**
+   * Format date for display
+   */
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    } catch {
+      return "Invalid Date"
+    }
+  }
+
+  // Error state
   if (error) {
     return (
       <Card>
@@ -231,11 +385,13 @@ export function DatabaseTable({
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {error}
-              <Button variant="outline" size="sm" className="ml-2 bg-transparent" onClick={fetchData}>
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Retry
-              </Button>
+              <div className="flex items-center justify-between">
+                <span>{error}</span>
+                <Button variant="outline" size="sm" className="ml-2 bg-transparent" onClick={fetchData}>
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  Retry
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -245,16 +401,16 @@ export function DatabaseTable({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5" />
-                {title}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            <div className="flex items-center gap-3">
+              <Database className="w-6 h-6 text-primary" />
+              <div>
+                <CardTitle className="text-xl">{title}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">{description}</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
@@ -270,46 +426,72 @@ export function DatabaseTable({
         </CardHeader>
       </Card>
 
-      {/* Debug Info (only show in development) */}
-      {debugInfo && process.env.NODE_ENV === "development" && (
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Info className="w-4 h-4" />
-              Debug Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs space-y-2">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-500" />
               <div>
-                <strong>Total Records:</strong> {debugInfo.totalRecords}
-              </div>
-              <div>
-                <strong>Applied Filters:</strong> {JSON.stringify(debugInfo.appliedFilters)}
-              </div>
-              <div>
-                <strong>Gender Stats:</strong> {JSON.stringify(debugInfo.genderStatsRaw)}
+                <p className="text-sm text-muted-foreground">Total Records</p>
+                <p className="text-2xl font-bold">{pagination.totalCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-      )}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-green-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Showing</p>
+                <p className="text-2xl font-bold">{data.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-orange-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Current Page</p>
+                <p className="text-2xl font-bold">{pagination.currentPage}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-purple-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Selected</p>
+                <p className="text-2xl font-bold">{selectedRows.size}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Filters */}
+      {/* Advanced Filters */}
       {showFilters && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Database Filters</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Advanced Filters & Export
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="search">Search Name</Label>
+                <Label htmlFor="search">Search by Name</Label>
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="search"
-                    placeholder="Search by name..."
+                    placeholder="Enter name to search..."
                     value={filters.search}
                     onChange={(e) => handleFilterChange("search", e.target.value)}
                     className="pl-8"
@@ -330,7 +512,7 @@ export function DatabaseTable({
                     <SelectItem value="all">All categories</SelectItem>
                     {filterOptions.categories.map((cat: any) => (
                       <SelectItem key={cat.value} value={cat.value}>
-                        {cat.value} ({cat.count})
+                        {cat.label} ({cat.count})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -341,10 +523,7 @@ export function DatabaseTable({
                 <Label htmlFor="gender">Gender</Label>
                 <Select
                   value={filters.gender}
-                  onValueChange={(value) => {
-                    console.log("Gender select changed to:", value)
-                    handleFilterChange("gender", value === "all" ? "" : value)
-                  }}
+                  onValueChange={(value) => handleFilterChange("gender", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All genders" />
@@ -366,9 +545,12 @@ export function DatabaseTable({
                 <Button variant="outline" onClick={clearFilters}>
                   Clear All Filters
                 </Button>
-                <div className="text-sm text-muted-foreground">
-                  Available genders: {filterOptions.genders.map((g) => `${g.label} (${g.count})`).join(", ")}
-                </div>
+                {selectedRows.size > 0 && showAdvancedFeatures && (
+                  <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={bulkDeleting}>
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete Selected ({selectedRows.size})
+                  </Button>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => handleExport("json")} disabled={exporting}>
@@ -385,19 +567,20 @@ export function DatabaseTable({
         </Card>
       )}
 
-      {/* Database Table */}
+      {/* Main Data Table */}
       <Card>
         <CardContent className="p-0">
           {/* Table Controls */}
           <div className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                Showing {data.length} of {pagination.totalCount} database records
+                Showing {data.length} of {pagination.totalCount} records
               </span>
+              {selectedRows.size > 0 && <Badge variant="secondary">{selectedRows.size} selected</Badge>}
             </div>
             <div className="flex items-center gap-2">
               <Label htmlFor="limit" className="text-sm">
-                Records per page:
+                Per page:
               </Label>
               <Select value={pagination.limit.toString()} onValueChange={handleLimitChange}>
                 <SelectTrigger className="w-20">
@@ -414,11 +597,20 @@ export function DatabaseTable({
             </div>
           </div>
 
-          {/* Table */}
+          {/* Data Table */}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  {showAdvancedFeatures && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={data.length > 0 && selectedRows.size === data.length}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all rows"
+                      />
+                    </TableHead>
+                  )}
                   <TableHead>
                     <Button
                       variant="ghost"
@@ -496,16 +688,21 @@ export function DatabaseTable({
                       className="h-auto p-0 font-semibold"
                       onClick={() => handleSort("lastCalculation")}
                     >
-                      Last Calculation {getSortIcon("lastCalculation")}
+                      Last Updated {getSortIcon("lastCalculation")}
                     </Button>
                   </TableHead>
-                  <TableHead>Total Calculations</TableHead>
+                  <TableHead>Calculations</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   Array.from({ length: pagination.limit }).map((_, index) => (
                     <TableRow key={index}>
+                      {showAdvancedFeatures && (
+                        <TableCell>
+                          <Skeleton className="h-4 w-4" />
+                        </TableCell>
+                      )}
                       {Array.from({ length: 9 }).map((_, cellIndex) => (
                         <TableCell key={cellIndex}>
                           <Skeleton className="h-4 w-full" />
@@ -515,10 +712,11 @@ export function DatabaseTable({
                   ))
                 ) : data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={showAdvancedFeatures ? 11 : 10} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Database className="w-8 h-8 text-muted-foreground" />
-                        <p className="text-muted-foreground">No database records found</p>
+                        <p className="text-muted-foreground">No records found</p>
+                        <p className="text-sm text-muted-foreground">Try adjusting your filters or add some data</p>
                         <Button variant="outline" size="sm" onClick={clearFilters}>
                           Clear Filters
                         </Button>
@@ -527,17 +725,32 @@ export function DatabaseTable({
                   </TableRow>
                 ) : (
                   data.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className="hover:bg-muted/50">
+                      {showAdvancedFeatures && (
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRows.has(user.id)}
+                            onCheckedChange={(checked) => handleRowSelect(user.id, checked as boolean)}
+                            aria-label={`Select ${user.name}`}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell className="capitalize">{user.gender}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {user.gender}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{user.age}</TableCell>
                       <TableCell>{user.height}</TableCell>
                       <TableCell>{user.weight}</TableCell>
-                      <TableCell>{user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}</TableCell>
+                      <TableCell>
+                        <span className="font-mono">{user.currentBmi ? user.currentBmi.toFixed(2) : "N/A"}</span>
+                      </TableCell>
                       <TableCell>
                         <Badge className={getBmiCategoryColor(user.currentCategory)}>{user.currentCategory}</Badge>
                       </TableCell>
-                      <TableCell>{new Date(user.lastCalculation).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-sm">{formatDate(user.lastCalculation)}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{user.calculationCount}</Badge>
                       </TableCell>
@@ -548,11 +761,11 @@ export function DatabaseTable({
             </Table>
           </div>
 
-          {/* Pagination */}
+          {/* Pagination Controls */}
           {!loading && data.length > 0 && (
             <div className="flex items-center justify-between p-4 border-t">
               <div className="text-sm text-muted-foreground">
-                Page {pagination.currentPage} of {pagination.totalPages}
+                Page {pagination.currentPage} of {pagination.totalPages}({pagination.totalCount} total records)
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -560,6 +773,7 @@ export function DatabaseTable({
                   size="sm"
                   onClick={() => handlePageChange(1)}
                   disabled={!pagination.hasPrevPage}
+                  title="First page"
                 >
                   <ChevronsLeft className="w-4 h-4" />
                 </Button>
@@ -568,10 +782,11 @@ export function DatabaseTable({
                   size="sm"
                   onClick={() => handlePageChange(pagination.currentPage - 1)}
                   disabled={!pagination.hasPrevPage}
+                  title="Previous page"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm px-2">
+                <span className="text-sm px-3 py-1 bg-muted rounded">
                   {pagination.currentPage} / {pagination.totalPages}
                 </span>
                 <Button
@@ -579,6 +794,7 @@ export function DatabaseTable({
                   size="sm"
                   onClick={() => handlePageChange(pagination.currentPage + 1)}
                   disabled={!pagination.hasNextPage}
+                  title="Next page"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -587,6 +803,7 @@ export function DatabaseTable({
                   size="sm"
                   onClick={() => handlePageChange(pagination.totalPages)}
                   disabled={!pagination.hasNextPage}
+                  title="Last page"
                 >
                   <ChevronsRight className="w-4 h-4" />
                 </Button>
