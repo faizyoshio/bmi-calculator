@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
 
 export async function POST(req: Request) {
   try {
@@ -28,7 +27,7 @@ export async function POST(req: Request) {
     if (bmi < 18.5) {
       category = "Underweight"
     } else if (bmi >= 18.5 && bmi < 24.9) {
-      category = "Normal Weight"
+      category = "Normal"
     } else if (bmi >= 25 && bmi < 29.9) {
       category = "Overweight"
     } else {
@@ -42,7 +41,7 @@ export async function POST(req: Request) {
         healthTip =
           "Consider consulting a nutritionist to develop a healthy weight gain plan. Focus on nutrient-dense foods and regular exercise to build muscle mass."
         break
-      case "Normal Weight":
+      case "Normal":
         healthTip =
           "Great job! Maintain your healthy weight through balanced nutrition and regular physical activity. Keep up the good work!"
         break
@@ -58,53 +57,6 @@ export async function POST(req: Request) {
         healthTip = "No specific health tip available for this category."
     }
 
-    // Database interaction
-    const client = await clientPromise
-    const db = client.db(process.env.DB_NAME) // Use DB_NAME from environment variables
-    const usersCollection = db.collection("users")
-
-    const userDocument = {
-      name: name || "Anonymous", // Default to 'Anonymous' if name is not provided
-      gender: gender || "unknown", // Default to 'unknown' if gender is not provided
-      height: parsedHeight,
-      weight: parsedWeight,
-      age: parsedAge,
-      currentBmi: bmi,
-      currentCategory: category,
-      lastCalculation: new Date(),
-      calculationCount: 1, // Initialize count
-    }
-
-    // Try to find an existing user by name (if provided)
-    let existingUser
-    if (name) {
-      existingUser = await usersCollection.findOne({ name })
-    }
-
-    if (existingUser) {
-      // Update existing user's data
-      const updateResult = await usersCollection.updateOne(
-        { _id: existingUser._id },
-        {
-          $set: {
-            gender: gender || existingUser.gender, // Update gender if provided, else keep existing
-            height: parsedHeight,
-            weight: parsedWeight,
-            age: parsedAge || existingUser.age, // Update age if provided, else keep existing
-            currentBmi: bmi,
-            currentCategory: category,
-            lastCalculation: new Date(),
-          },
-          $inc: { calculationCount: 1 }, // Increment calculation count
-        },
-      )
-      console.log("User updated:", updateResult)
-    } else {
-      // Insert new user
-      const insertResult = await usersCollection.insertOne(userDocument)
-      console.log("New user inserted:", insertResult)
-    }
-
     return NextResponse.json(
       {
         bmi,
@@ -118,8 +70,11 @@ export async function POST(req: Request) {
       },
       { status: 200 },
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error("BMI API Error:", error)
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 },
+    )
   }
 }

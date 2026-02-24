@@ -36,7 +36,7 @@ const translations = {
     consultAdvice: "Consult a healthcare professional for medical advice.",
     personalizedFor: "Personalized for",
     welcomeMessage: "Welcome!",
-    dataStoredMessage: "Hello {name}! Your data has been securely stored.",
+    dataStoredMessage: "Hello {name}! Your BMI result is ready.",
 
     // Validation messages
     nameRange: "Name must be between 2-50 characters",
@@ -192,7 +192,7 @@ const translations = {
     consultAdvice: "Konsultasikan dengan profesional kesehatan untuk saran medis.",
     personalizedFor: "Dipersonalisasi untuk",
     welcomeMessage: "Selamat datang!",
-    dataStoredMessage: "Halo {name}! Data Anda telah disimpan dengan aman.",
+    dataStoredMessage: "Halo {name}! Hasil BMI Anda sudah siap.",
 
     // Validation messages
     nameRange: "Nama harus antara 2-50 karakter",
