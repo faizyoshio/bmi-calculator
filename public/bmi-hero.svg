@@ -1,0 +1,88 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="60" y1="60" x2="1140" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DBEAFE"/>
+      <stop offset="1" stop-color="#C7D2FE"/>
+    </linearGradient>
+    <linearGradient id="card" x1="390" y1="120" x2="810" y2="680" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#EFF6FF" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="person" x1="560" y1="305" x2="640" y2="475" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22C55E"/>
+      <stop offset="0.5" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#EF4444"/>
+    </linearGradient>
+    <filter id="softShadow" x="0" y="0" width="1200" height="800" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect x="60" y="60" width="1080" height="680" rx="42" fill="url(#bg)"/>
+
+  <circle cx="150" cy="120" r="50" fill="#93C5FD" fill-opacity="0.45"/>
+  <circle cx="1050" cy="170" r="68" fill="#818CF8" fill-opacity="0.34"/>
+  <circle cx="1020" cy="640" r="56" fill="#34D399" fill-opacity="0.3"/>
+
+  <rect x="390" y="120" width="420" height="560" rx="40" fill="url(#card)"/>
+  <rect x="390" y="120" width="420" height="560" rx="40" stroke="#BFDBFE" stroke-width="2"/>
+
+  <text x="600" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="700" fill="#1E3A8A">BMI</text>
+  <text x="600" y="208" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#475569">Body Metrics</text>
+
+  <circle cx="600" cy="255" r="42" fill="#93C5FD"/>
+  <rect x="560" y="305" width="80" height="170" rx="40" fill="url(#person)"/>
+  <rect x="526" y="325" width="28" height="110" rx="14" fill="#60A5FA"/>
+  <rect x="646" y="325" width="28" height="110" rx="14" fill="#60A5FA"/>
+  <rect x="560" y="470" width="30" height="116" rx="15" fill="#2563EB"/>
+  <rect x="610" y="470" width="30" height="116" rx="15" fill="#2563EB"/>
+
+  <rect x="688" y="220" width="28" height="300" rx="14" fill="#E0E7FF"/>
+  <rect x="697" y="236" width="10" height="2.5" rx="1.25" fill="#6366F1"/>
+  <rect x="694" y="268" width="16" height="2.5" rx="1.25" fill="#6366F1"/>
+  <rect x="697" y="300" width="10" height="2.5" rx="1.25" fill="#6366F1"/>
+  <rect x="694" y="332" width="16" height="2.5" rx="1.25" fill="#6366F1"/>
+  <rect x="697" y="364" width="10" height="2.5" rx="1.25" fill="#6366F1"/>
+  <rect x="694" y="396" width="16" height="2.5" rx="1.25" fill="#6366F1"/>
+  <rect x="697" y="428" width="10" height="2.5" rx="1.25" fill="#6366F1"/>
+  <rect x="694" y="460" width="16" height="2.5" rx="1.25" fill="#6366F1"/>
+
+  <rect x="500" y="520" width="200" height="96" rx="30" fill="#DBEAFE"/>
+  <circle cx="600" cy="568" r="27" fill="white"/>
+  <path d="M600 568 L619 552" stroke="#1D4ED8" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="600" cy="568" r="5.5" fill="#1D4ED8"/>
+
+  <rect x="120" y="190" width="220" height="220" rx="28" fill="white" fill-opacity="0.86"/>
+  <rect x="152" y="230" width="156" height="120" rx="16" fill="#E0E7FF"/>
+  <rect x="166" y="246" width="128" height="28" rx="8" fill="#C7D2FE"/>
+  <rect x="166" y="286" width="36" height="22" rx="6" fill="#BFDBFE"/>
+  <rect x="212" y="286" width="36" height="22" rx="6" fill="#BFDBFE"/>
+  <rect x="258" y="286" width="36" height="22" rx="6" fill="#BFDBFE"/>
+  <rect x="166" y="318" width="36" height="22" rx="6" fill="#BFDBFE"/>
+  <rect x="212" y="318" width="36" height="22" rx="6" fill="#BFDBFE"/>
+  <rect x="258" y="318" width="36" height="22" rx="6" fill="#BFDBFE"/>
+  <text x="230" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#334155">TRACK</text>
+
+  <rect x="860" y="190" width="220" height="220" rx="28" fill="white" fill-opacity="0.86"/>
+  <circle cx="970" cy="280" r="66" fill="#FEE2E2"/>
+  <path d="M970 320 C930 294 920 266 938 248 C953 232 978 236 970 258 C962 236 987 232 1002 248 C1020 266 1010 294 970 320Z" fill="#EF4444"/>
+  <text x="970" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#334155">HEALTH</text>
+
+  <rect x="150" y="500" width="250" height="130" rx="24" fill="white" fill-opacity="0.86"/>
+  <text x="185" y="548" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#1E3A8A">BMI RANGE</text>
+  <rect x="185" y="570" width="180" height="18" rx="9" fill="#E2E8F0"/>
+  <rect x="185" y="570" width="60" height="18" rx="9" fill="#38BDF8"/>
+  <rect x="245" y="570" width="55" height="18" rx="0" fill="#22C55E"/>
+  <rect x="300" y="570" width="45" height="18" rx="0" fill="#F59E0B"/>
+  <rect x="345" y="570" width="20" height="18" rx="9" fill="#EF4444"/>
+  <circle cx="302" cy="579" r="10" fill="white" stroke="#1E3A8A" stroke-width="3"/>
+  <text x="185" y="610" font-family="Arial, sans-serif" font-size="14" fill="#475569">Current: Normal</text>
+
+  <g filter="url(#softShadow)" opacity="0.12">
+    <ellipse cx="600" cy="705" rx="250" ry="25" fill="#1E3A8A"/>
+  </g>
+</svg>
