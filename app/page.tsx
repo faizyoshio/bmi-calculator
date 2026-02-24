@@ -167,13 +167,6 @@ export default function BMICalculator() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("title")}</h1>
           <p className="text-gray-600 dark:text-gray-300">{t("subtitle")}</p>
-          <div className="mt-5">
-            <img
-              src="/bmi-hero.svg"
-              alt="BMI health illustration"
-              className="w-full max-w-sm mx-auto h-auto rounded-2xl border border-white/30 shadow-2xl"
-            />
-          </div>
         </div>
 
         {/* Main Form Card */}

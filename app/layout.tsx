@@ -12,7 +12,11 @@ export const metadata: Metadata = {
   description:
     "Calculate your Body Mass Index with our modern, user-friendly BMI calculator. Get personalized health insights and tips.",
   keywords: "BMI, Body Mass Index, health, fitness, weight, calculator",
-    generator: 'v0.dev'
+  generator: "v0.dev",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+  },
 }
 
 export default function RootLayout({

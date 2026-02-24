@@ -1,0 +1,23 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#bg)"/>
+  <rect x="12" y="12" width="40" height="40" rx="12" fill="white" fill-opacity="0.96"/>
+
+  <text x="32" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#1E3A8A">
+    BMI
+  </text>
+
+  <path d="M20 41C22.8 36.8 27.2 34.5 32 34.5C36.8 34.5 41.2 36.8 44 41" stroke="#CBD5E1" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M20 41C22.4 37.5 26.1 35.6 30 35.1" stroke="#22C55E" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M30 35.1C31.3 34.9 32.7 34.9 34 35.1" stroke="#F59E0B" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M34 35.1C37.9 35.6 41.6 37.5 44 41" stroke="#EF4444" stroke-width="3.4" stroke-linecap="round"/>
+
+  <line x1="32" y1="41" x2="39.5" y2="36.5" stroke="#1E3A8A" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="32" cy="41" r="2.2" fill="#1E3A8A"/>
+</svg>
