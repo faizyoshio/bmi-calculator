@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getSupabase } from "@/lib/supabase"
 
 export async function POST(req: Request) {
   try {
@@ -55,6 +56,29 @@ export async function POST(req: Request) {
         break
       default:
         healthTip = "No specific health tip available for this category."
+    }
+
+    // Save record to Supabase if credentials exist
+    const supabase = getSupabase()
+    if (supabase) {
+      try {
+        const { error: dbError } = await supabase.from("bmi_records").insert({
+          name: name || "Anonymous",
+          gender: gender || "unknown",
+          height: parsedHeight,
+          weight: parsedWeight,
+          age: parsedAge,
+          bmi: Number(bmi.toFixed(2)),
+          category,
+          health_tip: healthTip,
+        })
+
+        if (dbError) {
+          console.error("Supabase insert error:", dbError)
+        }
+      } catch (dbErr) {
+        console.error("Supabase connection error:", dbErr)
+      }
     }
 
     return NextResponse.json(
